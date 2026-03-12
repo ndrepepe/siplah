@@ -14,6 +14,7 @@ import { Loader2, RefreshCw, Search, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,7 +132,7 @@ const TransactionList = () => {
                 <TableHead className="font-bold">Produk</TableHead>
                 <TableHead className="font-bold">Nominal</TableHead>
                 <TableHead className="font-bold text-center">% BM</TableHead>
-                <TableHead className="font-bold">Rekanan</TableHead>
+                <TableHead className="font-bold">Status</TableHead>
                 <TableHead className="font-bold">Kode Transaksi</TableHead>
                 <TableHead className="font-bold text-center">Aksi</TableHead>
               </TableRow>
@@ -154,7 +155,13 @@ const TransactionList = () => {
                 </TableRow>
               ) : (
                 filteredTransactions.map((t) => (
-                  <TableRow key={t.id} className="hover:bg-muted/30 transition-colors">
+                  <TableRow 
+                    key={t.id} 
+                    className={cn(
+                      "transition-colors",
+                      t.status === "DIBATALKAN" ? "bg-pink-50 hover:bg-pink-100" : "hover:bg-muted/30"
+                    )}
+                  >
                     <TableCell className="whitespace-nowrap">
                       {new Date(t.created_at).toLocaleDateString("id-ID")}
                     </TableCell>
@@ -180,12 +187,14 @@ const TransactionList = () => {
                       {t.bm_percentage}%
                     </TableCell>
                     <TableCell>
-                      <div className="text-xs font-medium">{t.rekanan_type}</div>
-                      {t.nama_rekanan && (
-                        <div className="text-[10px] text-muted-foreground italic">
-                          ({t.nama_rekanan})
-                        </div>
-                      )}
+                      <Badge 
+                        variant={t.status === "DIBATALKAN" ? "destructive" : "outline"}
+                        className={cn(
+                          t.status === "DIAJUKAN" && "bg-green-50 text-green-700 border-green-200"
+                        )}
+                      >
+                        {t.status || "DIAJUKAN"}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <code className="bg-muted px-2 py-1 rounded text-xs font-mono border">

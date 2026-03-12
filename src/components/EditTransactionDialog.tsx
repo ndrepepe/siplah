@@ -57,6 +57,7 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           produk: formData.produk,
           rekanan_type: formData.rekanan_type,
           nama_rekanan: formData.rekanan_type === "REKANAN" ? formData.nama_rekanan : null,
+          status: formData.status,
         })
         .eq("id", transaction.id);
 
@@ -158,9 +159,23 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
               </SelectContent>
             </Select>
           </div>
+
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select 
+              value={formData.status || "DIAJUKAN"} 
+              onValueChange={(val) => setFormData({...formData, status: val})}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
+                <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
           {formData.rekanan_type === "REKANAN" && (
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <Label>Nama Rekanan</Label>
               <Input 
                 value={formData.nama_rekanan || ""} 

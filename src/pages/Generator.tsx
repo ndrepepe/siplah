@@ -25,6 +25,7 @@ const Generator = () => {
   const [produk, setProduk] = useState("");
   const [rekananType, setRekananType] = useState("");
   const [namaRekanan, setNamaRekanan] = useState("");
+  const [status, setStatus] = useState("DIAJUKAN");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const { toast: showToast } = useToast();
@@ -66,6 +67,7 @@ const Generator = () => {
           produk,
           rekanan_type: rekananType,
           nama_rekanan: rekananType === "REKANAN" ? namaRekanan : null,
+          status: status,
           code: generatedCode
         });
 
@@ -86,6 +88,7 @@ const Generator = () => {
       setProduk("");
       setRekananType("");
       setNamaRekanan("");
+      setStatus("DIAJUKAN");
       setGeneratedCode("");
     } catch (error: any) {
       console.error("Error saving data:", error);
@@ -194,6 +197,20 @@ const Generator = () => {
                 <SelectContent>
                   <SelectItem value="NON REKANAN">NON REKANAN</SelectItem>
                   <SelectItem value="REKANAN">REKANAN</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Baris 5 - Status */}
+            <div className="space-y-2">
+              <Label>Status Transaksi</Label>
+              <Select onValueChange={setStatus} value={status}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
+                  <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
                 </SelectContent>
               </Select>
             </div>
