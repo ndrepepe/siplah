@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
+import { Anchor } from "lucide-react";
 
 const Login = () => {
   const { session } = useAuth();
@@ -13,15 +14,28 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md shadow-xl border-t-4 border-t-primary">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Selamat Datang</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Masuk ke Transaction Manager
+    <div 
+      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
+      style={{ 
+        backgroundImage: "url('https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?q=80&w=2000&auto=format&fit=crop')" 
+      }}
+    >
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[3px]" />
+      
+      <Card className="w-full max-w-md shadow-2xl border-none relative z-10 bg-white/95 backdrop-blur-md overflow-hidden">
+        <div className="h-2 bg-primary w-full" />
+        <CardHeader className="space-y-2 text-center pt-8">
+          <div className="mx-auto bg-primary w-16 h-16 rounded-full flex items-center justify-center text-white mb-2 shadow-lg">
+            <Anchor className="w-8 h-8" />
+          </div>
+          <CardTitle className="text-3xl font-black tracking-tighter text-slate-900">
+            GRAND LINE
+          </CardTitle>
+          <p className="text-sm text-muted-foreground font-medium">
+            Masuk untuk memulai petualangan transaksi Anda
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-8">
           <Auth
             supabaseClient={supabase}
             appearance={{ 
@@ -31,6 +45,10 @@ const Login = () => {
                   colors: {
                     brand: 'hsl(var(--primary))',
                     brandAccent: 'hsl(var(--primary))',
+                  },
+                  radii: {
+                    borderRadiusButton: '0.75rem',
+                    inputBorderRadius: '0.75rem',
                   }
                 }
               }
@@ -42,15 +60,14 @@ const Login = () => {
                 sign_in: {
                   email_label: 'Alamat Email',
                   password_label: 'Kata Sandi',
-                  button_label: 'Masuk',
-                  loading_button_label: 'Masuk...',
-                  social_provider_text: 'Masuk dengan {{provider}}',
+                  button_label: 'Masuk Sekarang',
+                  loading_button_label: 'Memproses...',
                   link_text: 'Sudah punya akun? Masuk',
                 },
                 sign_up: {
                   email_label: 'Alamat Email',
                   password_label: 'Kata Sandi',
-                  button_label: 'Daftar',
+                  button_label: 'Daftar Akun',
                   loading_button_label: 'Mendaftar...',
                   link_text: 'Belum punya akun? Daftar',
                 },
