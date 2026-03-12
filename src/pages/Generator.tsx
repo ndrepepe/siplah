@@ -136,13 +136,17 @@ const Generator = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="namaSiplah">Nama SIPLAH</Label>
-              <Input
-                id="namaSiplah"
-                value={namaSiplah}
-                onChange={(e) => setNamaSiplah(e.target.value)}
-                placeholder="Nama SIPLAH"
-              />
+              <Label>Nama SIPLAH</Label>
+              <Select onValueChange={setNamaSiplah} value={namaSiplah}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih SIPLAH" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LADANG">LADANG</SelectItem>
+                  <SelectItem value="TELKOM">TELKOM</SelectItem>
+                  <SelectItem value="BLIBLI">BLIBLI</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Baris 3 */}
