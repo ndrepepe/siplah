@@ -33,13 +33,26 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
 
   useEffect(() => {
     if (transaction) {
-      setFormData({ ...transaction });
+      setFormData({ 
+        ...transaction,
+        transaction_amount: transaction.transaction_amount?.toString() || "",
+        bm_percentage: transaction.bm_percentage?.toString() || ""
+      });
     }
   }, [transaction]);
 
   const handleSave = async () => {
     if (!formData.school_name || !formData.po_number || !formData.transaction_amount || !formData.bm_percentage) {
       toast.error("Mohon lengkapi field wajib");
+      return;
+    }
+
+    // Clean numeric values
+    const cleanAmount = parseFloat(formData.transaction_amount.toString().replace(/[^0-9.]/g, ''));
+    const cleanBm = parseFloat(formData.bm_percentage.toString().replace(/[^0-9.]/g, ''));
+
+    if (isNaN(cleanAmount) || isNaN(cleanBm)) {
+      toast.error("Format angka tidak valid");
       return;
     }
 
@@ -50,8 +63,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
         .update({
           school_name: formData.school_name,
           po_number: formData.po_number,
-          transaction_amount: parseFloat(formData.transaction_amount),
-          bm_percentage: parseFloat(formData.bm_percentage),
+          transaction_amount: cleanAmount,
+          bm_percentage: cleanBm,
           cabang: formData.cabang,
           nama_siplah: formData.nama_siplah,
           produk: formData.produk,
@@ -119,7 +132,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           <div className="space-y-2">
             <Label>Nominal (Rp)</Label>
             <Input 
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={formData.transaction_amount || ""} 
               onChange={(e) => setFormData({...formData, transaction_amount: e.target.value})}
             />
@@ -127,8 +141,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           <div className="space-y-2">
             <Label>% BM</Label>
             <Input 
-              type="number"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={formData.bm_percentage || ""} 
               onChange={(e) => setFormData({...formData, bm_percentage: e.target.value})}
             />

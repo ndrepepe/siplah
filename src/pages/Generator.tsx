@@ -53,6 +53,15 @@ const Generator = () => {
       return;
     }
 
+    // Clean numeric values to prevent overflow or formatting issues
+    const cleanAmount = parseFloat(transactionAmount.replace(/[^0-9.]/g, ''));
+    const cleanBm = parseFloat(bmPercentage.replace(/[^0-9.]/g, ''));
+
+    if (isNaN(cleanAmount) || isNaN(cleanBm)) {
+      toast.error("Format angka tidak valid");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -60,8 +69,8 @@ const Generator = () => {
         .insert({
           school_name: schoolName,
           po_number: poNumber,
-          transaction_amount: parseFloat(transactionAmount),
-          bm_percentage: parseFloat(bmPercentage),
+          transaction_amount: cleanAmount,
+          bm_percentage: cleanBm,
           cabang,
           nama_siplah: namaSiplah,
           produk,
@@ -157,7 +166,8 @@ const Generator = () => {
               <Label htmlFor="transactionAmount">Nominal Transaksi (Rp)</Label>
               <Input
                 id="transactionAmount"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={transactionAmount}
                 onChange={(e) => setTransactionAmount(e.target.value)}
                 placeholder="Jumlah"
@@ -167,8 +177,8 @@ const Generator = () => {
               <Label htmlFor="bmPercentage">% BM</Label>
               <Input
                 id="bmPercentage"
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={bmPercentage}
                 onChange={(e) => setBmPercentage(e.target.value)}
                 placeholder="Contoh: 10"
