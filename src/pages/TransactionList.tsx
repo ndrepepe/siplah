@@ -10,15 +10,34 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import EditTransactionDialog from "@/components/EditTransactionDialog";
 
 const TransactionList = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // State for Edit
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  // State for Delete
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -41,6 +60,27 @@ const TransactionList = () => {
   useEffect(() => {
     fetchTransactions();
   }, []);
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", deletingId);
+
+      if (error) throw error;
+      
+      toast.success("Data berhasil dihapus");
+      fetchTransactions();
+    } catch (error: any) {
+      toast.error("Gagal menghapus data: " + error.message);
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDeletingId(null);
+    }
+  };
 
   const filteredTransactions = transactions.filter((t) =>
     t.school_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,12 +133,13 @@ const TransactionList = () => {
                 <TableHead className="font-bold text-center">% BM</TableHead>
                 <TableHead className="font-bold">Rekanan</TableHead>
                 <TableHead className="font-bold">Kode Transaksi</TableHead>
+                <TableHead className="font-bold text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
+                  <TableCell colSpan={9} className="h-24 text-center">
                     <div className="flex items-center justify-center">
                       <Loader2 className="w-6 h-6 animate-spin mr-2" />
                       Memuat data...
@@ -107,7 +148,7 @@ const TransactionList = () => {
                 </TableRow>
               ) : filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                     Tidak ada data ditemukan.
                   </TableCell>
                 </TableRow>
@@ -151,6 +192,32 @@ const TransactionList = () => {
                         {t.code}
                       </code>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={() => {
+                            setEditingTransaction(t);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => {
+                            setDeletingId(t.id);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -158,6 +225,32 @@ const TransactionList = () => {
           </Table>
         </div>
       </CardContent>
+
+      {/* Edit Dialog */}
+      <EditTransactionDialog 
+        transaction={editingTransaction}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={fetchTransactions}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Data transaksi ini akan dihapus secara permanen dari database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
