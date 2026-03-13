@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import * as XLSX from 'xlsx';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -103,20 +104,40 @@ const TransactionList = () => {
       return;
     }
 
-    // Create CSV content
-    const csvContent = "text/csv;charset=utf-8";
-    const data = filteredTransactions.map((t) =>
-      `${new Date(t.created_at).toLocaleDateString("id-ID")},${t.school_name},${t.po_number},${t.nama_siplah},${t.produk},${formatCurrency(t.transaction_amount)},${t.bm_percentage}%,${t.status},${t.code},${t.rekanan_type},${t.nama_rekanan || ""}`
-    ).join("\r\n");
+    // Prepare the data for the worksheet
+    const ws_data = [
+      ["Tanggal", "Sekolah / Cabang", "No PO / SIPLAH", "Produk", "Nominal", "% BM", "Status", "Kode Transaksi", "Rekanan", "Nama Rekanan", "Aksi"]
+    ];
 
-    // Create download link
-    const encodedUri = encodeURI(data);
-    const link = document.createElement("a");
-    link.setAttribute("href", "data:" + csvContent + "," + encodedUri);
-    link.setAttribute("download", "transaksi.csv");
-    document.body.appendChild(link);
+    filteredTransactions.forEach(t => {
+      ws_data.push([
+        new Date(t.created_at).toLocaleDateString("id-ID"),
+        `${t.school_name}\n${t.cabang}`, // Combine school and cabang with newline
+        t.po_number,
+        t.produk,
+        formatCurrency(t.transaction_amount),
+        `${t.bm_percentage}%`,
+        t.status,
+        t.code,
+        t.rekanan_type,
+        t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN",
+        "Edit | Hapus" // This is just for display in Excel, not functional
+      ]);
+    });
+
+    // Create a new workbook and add the worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    XLSX.utils.book_append_sheet(wb, ws, "Transaksi");
+
+    // Generate the Excel file and trigger download    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'transaksi.xlsx';
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -279,8 +300,7 @@ const TransactionList = () => {
       </CardContent>
 
       {/* Edit Dialog */}
-      <EditTransactionDialog
-        transaction={editingTransaction}
+      <EditTransactionDialog        transaction={editingTransaction}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSuccess={fetchTransactions}
