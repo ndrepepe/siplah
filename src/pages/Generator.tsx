@@ -27,17 +27,42 @@ const Generator = () => {
   const [namaRekanan, setNamaRekanan] = useState("");
   const [status, setStatus] = useState("DIAJUKAN");
   const [generatedCode, setGeneratedCode] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast: showToast } = useToast();
 
-  const generateCode = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let result = "";
-    for (let i = 0; i < 16; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+  const generateUniqueCode = async () => {
+    setIsGenerating(true);
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let result = "";
+      for (let i = 0; i < 16; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      
+      // Cek apakah kode sudah ada di database
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("code")
+        .eq("code", result)
+        .single();
+      
+      if (error && error.code === 'PGRST116') {
+        // Kode tidak ditemukan, artinya unik
+        setGeneratedCode(result);
+        setIsGenerating(false);
+        toast.success("Kode baru berhasil dibuat!");
+        return;
+      }
+      
+      attempts++;
     }
-    setGeneratedCode(result);
-    toast.success("Kode baru berhasil dibuat!");
+    
+    setIsGenerating(false);
+    toast.error("Gagal generate kode unik setelah beberapa percobaan");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -253,10 +278,15 @@ const Generator = () => {
               <Button 
                 type="button" 
                 variant="outline"
-                onClick={generateCode}
+                onClick={generateUniqueCode}
+                disabled={isGenerating}
                 className="shrink-0"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                {isGenerating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
                 Generate
               </Button>
             </div>
