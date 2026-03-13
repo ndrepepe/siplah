@@ -31,11 +31,11 @@ const TransactionList = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // State for Edit
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
+
   // State for Delete
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -64,7 +64,7 @@ const TransactionList = () => {
 
   const handleDelete = async () => {
     if (!deletingId) return;
-    
+
     try {
       const { error } = await supabase
         .from("transactions")
@@ -72,7 +72,7 @@ const TransactionList = () => {
         .eq("id", deletingId);
 
       if (error) throw error;
-      
+
       toast.success("Data berhasil dihapus");
       fetchTransactions();
     } catch (error: any) {
@@ -105,8 +105,8 @@ const TransactionList = () => {
 
     // Create CSV content
     const csvContent = "text/csv;charset=utf-8";
-    const data = filteredTransactions.map((t) => 
-      `${new Date(t.created_at).toLocaleDateString("id-ID")},${t.school_name},${t.po_number},${t.nama_siplah},${t.produk},${formatCurrency(t.transaction_amount)},${t.bm_percentage}%,${t.status},${t.code}`
+    const data = filteredTransactions.map((t) =>
+      `${new Date(t.created_at).toLocaleDateString("id-ID")},${t.school_name},${t.po_number},${t.nama_siplah},${t.produk},${formatCurrency(t.transaction_amount)},${t.bm_percentage}%,${t.status},${t.code},${t.rekanan_type}`
     ).join("\r\n");
 
     // Create download link
@@ -124,18 +124,18 @@ const TransactionList = () => {
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={fetchTransactions}
             disabled={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={exportToExcel}
             className="text-blue-500 hover:text-blue-700"
           >
@@ -167,13 +167,14 @@ const TransactionList = () => {
                 <TableHead className="font-bold text-center">% BM</TableHead>
                 <TableHead className="font-bold">Status</TableHead>
                 <TableHead className="font-bold">Kode Transaksi</TableHead>
+                <TableHead className="font-bold">Rekanan</TableHead>
                 <TableHead className="font-bold text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
+                  <TableCell colSpan={10} className="h-24 text-center">
                     <div className="flex items-center justify-center">
                       <Loader2 className="w-6 h-6 animate-spin mr-2" />
                       Memuat data...
@@ -182,14 +183,14 @@ const TransactionList = () => {
                 </TableRow>
               ) : filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
                     Tidak ada data ditemukan.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredTransactions.map((t) => (
-                  <TableRow 
-                    key={t.id} 
+                  <TableRow
+                    key={t.id}
                     className={cn(
                       "transition-colors",
                       t.status === "DIBATALKAN" ? "bg-pink-50 hover:bg-pink-100" : "hover:bg-muted/30"
@@ -220,7 +221,7 @@ const TransactionList = () => {
                       {t.bm_percentage}%
                     </TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant={t.status === "DIBATALKAN" ? "destructive" : "outline"}
                         className={cn(
                           t.status === "DIAJUKAN" && "bg-green-50 text-green-700 border-green-200"
@@ -235,10 +236,15 @@ const TransactionList = () => {
                       </code>
                     </TableCell>
                     <TableCell>
+                      <Badge variant={t.rekanan_type === "REKANAN" ? "default" : "secondary"}>
+                        {t.rekanan_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center justify-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           onClick={() => {
                             setEditingTransaction(t);
@@ -247,9 +253,9 @@ const TransactionList = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                           onClick={() => {
                             setDeletingId(t.id);
@@ -269,7 +275,7 @@ const TransactionList = () => {
       </CardContent>
 
       {/* Edit Dialog */}
-      <EditTransactionDialog 
+      <EditTransactionDialog
         transaction={editingTransaction}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
