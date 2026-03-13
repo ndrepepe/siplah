@@ -19,9 +19,13 @@ const Index = () => {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
+      className="min-h-screen bg-slate-900"
       style={{ 
-        backgroundImage: "url('https://images.alphacoders.com/605/605729.jpg')" 
+        backgroundImage: "url('https://images.alphacoders.com/605/605729.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
       }}
     >
       <div className="min-h-screen bg-slate-50/60 backdrop-blur-[2px] p-4 md:p-8">

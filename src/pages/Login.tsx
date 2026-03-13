@@ -15,9 +15,12 @@ const Login = () => {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
+      className="min-h-screen flex items-center justify-center bg-slate-900"
       style={{ 
-        backgroundImage: "url('https://images.alphacoders.com/605/605729.jpg')" 
+        backgroundImage: "url('https://images.alphacoders.com/605/605729.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
       }}
     >
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" />
