@@ -10,12 +10,14 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2 } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,33 +106,29 @@ const TransactionList = () => {
       return;
     }
 
-    // Prepare the data for the worksheet
     const ws_data = [
-      ["Tanggal", "Sekolah / Cabang", "No PO / SIPLAH", "Produk", "Nominal", "% BM", "Status", "Kode Transaksi", "Rekanan", "Nama Rekanan", "Aksi"]
+      ["Tanggal", "Sekolah / Cabang", "No PO / SIPLAH", "Produk", "Nominal", "% BM", "Status", "Kode Transaksi", "Rekanan", "Nama Rekanan"]
     ];
 
     filteredTransactions.forEach(t => {
       ws_data.push([
         new Date(t.created_at).toLocaleDateString("id-ID"),
-        `${t.school_name}\n${t.cabang}`, // Combine school and cabang with newline
-        t.po_number,
+        `${t.school_name} (${t.cabang})`,
+        `${t.po_number} (${t.nama_siplah})`,
         t.produk,
         formatCurrency(t.transaction_amount),
         `${t.bm_percentage}%`,
         t.status,
         t.code,
         t.rekanan_type,
-        t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN",
-        "Edit | Hapus" // This is just for display in Excel, not functional
+        t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"
       ]);
     });
 
-    // Create a new workbook and add the worksheet
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
     XLSX.utils.book_append_sheet(wb, ws, "Transaksi");
 
-    // Generate the Excel file and trigger download
     const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const data = new Blob([excelBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url = URL.createObjectURL(data);
@@ -139,6 +137,50 @@ const TransactionList = () => {
     link.download = 'transaksi.xlsx';
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const downloadPDF = (t: any) => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(18);
+    doc.text("Detail Transaksi", 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Dicetak pada: ${new Date().toLocaleString("id-ID")}`, 14, 30);
+    
+    // Data rows for vertical layout
+    const tableData = [
+      ["ID Transaksi", t.id],
+      ["Tanggal", new Date(t.created_at).toLocaleDateString("id-ID")],
+      ["Nama Sekolah", t.school_name],
+      ["Cabang", t.cabang || "-"],
+      ["Nomor PO", t.po_number],
+      ["Nama SIPLAH", t.nama_siplah],
+      ["Produk", t.produk],
+      ["Nominal Transaksi", formatCurrency(t.transaction_amount)],
+      ["Persentase BM", `${t.bm_percentage}%`],
+      ["Status", t.status],
+      ["Kode Transaksi", t.code],
+      ["Tipe Rekanan", t.rekanan_type],
+      ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"]
+    ];
+
+    autoTable(doc, {
+      startY: 40,
+      head: [["Field", "Informasi"]],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [30, 41, 59] },
+      styles: { fontSize: 10, cellPadding: 5 },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 50 },
+        1: { cellWidth: 'auto' }
+      }
+    });
+
+    doc.save(`transaksi-${t.code}.pdf`);
+    toast.success("PDF berhasil diunduh");
   };
 
   return (
@@ -161,7 +203,7 @@ const TransactionList = () => {
             onClick={exportToExcel}
             className="text-blue-500 hover:text-blue-700"
           >
-            <i className="fas fa-file-excel-spreadsheet w-4 h-4" />
+            <FileDown className="w-4 h-4 mr-2" />
             Export ke Excel
           </Button>
         </div>
@@ -267,7 +309,16 @@ const TransactionList = () => {
                       {t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                          onClick={() => downloadPDF(t)}
+                          title="Download PDF"
+                        >
+                          <FileDown className="w-4 h-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -276,6 +327,7 @@ const TransactionList = () => {
                             setEditingTransaction(t);
                             setIsEditDialogOpen(true);
                           }}
+                          title="Edit"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -287,6 +339,7 @@ const TransactionList = () => {
                             setDeletingId(t.id);
                             setIsDeleteDialogOpen(true);
                           }}
+                          title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -300,7 +353,6 @@ const TransactionList = () => {
         </div>
       </CardContent>
 
-      {/* Edit Dialog */}
       <EditTransactionDialog
         transaction={editingTransaction}
         open={isEditDialogOpen}
@@ -308,7 +360,6 @@ const TransactionList = () => {
         onSuccess={fetchTransactions}
       />
 
-      {/* Delete Confirmation */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
