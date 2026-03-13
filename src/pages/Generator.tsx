@@ -53,11 +53,6 @@ const Generator = () => {
       return;
     }
 
-    if (!status) {
-      toast.error("Mohon pilih status transaksi");
-      return;
-    }
-
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -113,7 +108,6 @@ const Generator = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Baris 1 */}
             <div className="space-y-2">
               <Label htmlFor="schoolName">Nama Sekolah</Label>
               <Input
@@ -133,7 +127,6 @@ const Generator = () => {
               />
             </div>
 
-            {/* Baris 2 */}
             <div className="space-y-2">
               <Label htmlFor="poNumber">Nomor PO</Label>
               <Input
@@ -157,7 +150,6 @@ const Generator = () => {
               </Select>
             </div>
 
-            {/* Baris 3 */}
             <div className="space-y-2">
               <Label htmlFor="transactionAmount">Nominal Transaksi (Rp)</Label>
               <Input
@@ -180,7 +172,6 @@ const Generator = () => {
               />
             </div>
 
-            {/* Baris 4 - Selects */}
             <div className="space-y-2">
               <Label>Produk</Label>
               <Select onValueChange={setProduk} value={produk}>
@@ -205,14 +196,12 @@ const Generator = () => {
                 </SelectContent>
               </Select>
             </div>
-            {/* Add status field */}
+            
             <div className="space-y-2">
               <Label>Status</Label>
               <Select onValueChange={setStatus} value={status}>
                 <SelectTrigger>
-                  <SelectValue className="text-center">
-                    {status}
-                  </SelectValue>
+                  <SelectValue placeholder="Pilih Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
@@ -220,6 +209,18 @@ const Generator = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {rekananType === "REKANAN" && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label htmlFor="namaRekanan">Nama Rekanan</Label>
+                <Input
+                  id="namaRekanan"
+                  value={namaRekanan}
+                  onChange={(e) => setNamaRekanan(e.target.value)}
+                  placeholder="Masukkan Nama Rekanan"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2 pt-4 border-t">
