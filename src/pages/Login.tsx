@@ -17,12 +17,12 @@ const Login = () => {
     <div 
       className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
       style={{ 
-        backgroundImage: "url('dyad-media://media/siplah/.dyad/media/291f0f74bdc025d42e9f44f62f5b0ad7.jpg')" 
+        backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2070&auto=format&fit=crop')" 
       }}
     >
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />
       
-      <Card className="w-full max-w-md shadow-2xl border-none relative z-10 bg-white/95 backdrop-blur-md overflow-hidden">
+      <Card className="w-full max-w-md shadow-2xl border-none relative z-10 bg-white/90 backdrop-blur-md overflow-hidden">
         <div className="h-2 bg-primary w-full" />
         <CardHeader className="space-y-2 text-center pt-8">
           <div className="mx-auto bg-primary w-16 h-16 rounded-full flex items-center justify-center text-white mb-2 shadow-lg">
