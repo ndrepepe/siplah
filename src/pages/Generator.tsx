@@ -25,44 +25,18 @@ const Generator = () => {
   const [produk, setProduk] = useState("");
   const [rekananType, setRekananType] = useState("");
   const [namaRekanan, setNamaRekanan] = useState("");
-  const [status, setStatus] = useState("DIAJUKAN");
   const [generatedCode, setGeneratedCode] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast: showToast } = useToast();
 
-  const generateUniqueCode = async () => {
-    setIsGenerating(true);
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    while (attempts < maxAttempts) {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let result = "";
-      for (let i = 0; i < 16; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      
-      // Cek apakah kode sudah ada di database
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("code")
-        .eq("code", result)
-        .single();
-      
-      if (error && error.code === 'PGRST116') {
-        // Kode tidak ditemukan, artinya unik
-        setGeneratedCode(result);
-        setIsGenerating(false);
-        toast.success("Kode baru berhasil dibuat!");
-        return;
-      }
-      
-      attempts++;
+  const generateCode = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < 16; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    
-    setIsGenerating(false);
-    toast.error("Gagal generate kode unik setelah beberapa percobaan");
+    setGeneratedCode(result);
+    toast.success("Kode baru berhasil dibuat!");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,15 +52,6 @@ const Generator = () => {
       return;
     }
 
-    // Clean numeric values to prevent overflow or formatting issues
-    const cleanAmount = parseFloat(transactionAmount.replace(/[^0-9.]/g, ''));
-    const cleanBm = parseFloat(bmPercentage.replace(/[^0-9.]/g, ''));
-
-    if (isNaN(cleanAmount) || isNaN(cleanBm)) {
-      toast.error("Format angka tidak valid");
-      return;
-    }
-
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -94,14 +59,13 @@ const Generator = () => {
         .insert({
           school_name: schoolName,
           po_number: poNumber,
-          transaction_amount: cleanAmount,
-          bm_percentage: cleanBm,
+          transaction_amount: parseFloat(transactionAmount),
+          bm_percentage: parseFloat(bmPercentage),
           cabang,
           nama_siplah: namaSiplah,
           produk,
           rekanan_type: rekananType,
           nama_rekanan: rekananType === "REKANAN" ? namaRekanan : null,
-          status: status,
           code: generatedCode
         });
 
@@ -122,7 +86,6 @@ const Generator = () => {
       setProduk("");
       setRekananType("");
       setNamaRekanan("");
-      setStatus("DIAJUKAN");
       setGeneratedCode("");
     } catch (error: any) {
       console.error("Error saving data:", error);
@@ -191,8 +154,7 @@ const Generator = () => {
               <Label htmlFor="transactionAmount">Nominal Transaksi (Rp)</Label>
               <Input
                 id="transactionAmount"
-                type="text"
-                inputMode="numeric"
+                type="number"
                 value={transactionAmount}
                 onChange={(e) => setTransactionAmount(e.target.value)}
                 placeholder="Jumlah"
@@ -202,8 +164,8 @@ const Generator = () => {
               <Label htmlFor="bmPercentage">% BM</Label>
               <Input
                 id="bmPercentage"
-                type="text"
-                inputMode="decimal"
+                type="number"
+                step="0.01"
                 value={bmPercentage}
                 onChange={(e) => setBmPercentage(e.target.value)}
                 placeholder="Contoh: 10"
@@ -236,20 +198,6 @@ const Generator = () => {
               </Select>
             </div>
 
-            {/* Baris 5 - Status */}
-            <div className="space-y-2">
-              <Label>Status Transaksi</Label>
-              <Select onValueChange={setStatus} value={status}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
-                  <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Conditional Field */}
             {rekananType === "REKANAN" && (
               <div className="space-y-2 md:col-span-2 animate-in fade-in slide-in-from-top-2">
@@ -278,15 +226,10 @@ const Generator = () => {
               <Button 
                 type="button" 
                 variant="outline"
-                onClick={generateUniqueCode}
-                disabled={isGenerating}
+                onClick={generateCode}
                 className="shrink-0"
               >
-                {isGenerating ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                )}
+                <RefreshCw className="w-4 h-4 mr-2" />
                 Generate
               </Button>
             </div>

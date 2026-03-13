@@ -62,6 +62,7 @@ const Login = () => {
                   password_label: 'Kata Sandi',
                   button_label: 'Masuk Sekarang',
                   loading_button_label: 'Memproses...',
+                  social_provider_text: 'Masuk dengan {{provider}}',
                   link_text: 'Sudah punya akun? Masuk',
                 },
                 sign_up: {
