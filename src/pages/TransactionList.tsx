@@ -130,7 +130,8 @@ const TransactionList = () => {
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
     XLSX.utils.book_append_sheet(wb, ws, "Transaksi");
 
-    // Generate the Excel file and trigger download    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    // Generate the Excel file and trigger download
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const data = new Blob([excelBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url = URL.createObjectURL(data);
     const link = document.createElement('a');
@@ -300,7 +301,8 @@ const TransactionList = () => {
       </CardContent>
 
       {/* Edit Dialog */}
-      <EditTransactionDialog        transaction={editingTransaction}
+      <EditTransactionDialog
+        transaction={editingTransaction}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSuccess={fetchTransactions}
