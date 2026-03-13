@@ -21,7 +21,7 @@ const Index = () => {
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ 
-        backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2070&auto=format&fit=crop')" 
+        backgroundImage: "url('dyad-media://media/siplah/.dyad/media/291f0f74bdc025d42e9f44f62f5b0ad7.jpg')" 
       }}
     >
       <div className="min-h-screen bg-slate-50/60 backdrop-blur-[2px] p-4 md:p-8">
