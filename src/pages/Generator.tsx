@@ -15,46 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-function validateNumber(value: string, fieldName: string, maxIntegerDigits: number, maxDecimalDigits: number, min?: number, max?: number): number {
-  const cleanValue = value.replace(/[^0-9.-]/g, '');
-  if (cleanValue === '' || cleanValue === '-' || cleanValue === '.') {
-    throw new Error(`${fieldName} tidak valid`);
-  }
-  
-  const num = parseFloat(cleanValue);
-  if (!isFinite(num)) {
-    throw new Error(`${fieldName} terlalu besar atau tidak valid`);
-  }
-  
-  const parts = cleanValue.split('.');
-  let integerPart = parts[0];
-  const decimalPart = parts[1] || '';
-  
-  const isNegative = integerPart.startsWith('-');
-  if (isNegative) {
-    integerPart = integerPart.slice(1);
-  }
-  
-  const integerDigits = integerPart.replace(/^0+/, '') || '0';
-  
-  if (integerDigits.length > maxIntegerDigits) {
-    throw new Error(`${fieldName} terlalu besar (maksimal ${maxIntegerDigits} digit sebelum koma)`);
-  }
-  
-  if (decimalPart.length > maxDecimalDigits) {
-    throw new Error(`${fieldName} terlalu banyak desimal (maksimal ${maxDecimalDigits} digit setelah koma)`);
-  }
-  
-  if (min !== undefined && num < min) {
-    throw new Error(`${fieldName} minimal ${min}`);
-  }
-  if (max !== undefined && num > max) {
-    throw new Error(`${fieldName} maksimal ${max}`);
-  }
-  
-  return num;
-}
-
 const Generator = () => {
   const [schoolName, setSchoolName] = useState("");
   const [poNumber, setPoNumber] = useState("");
@@ -93,16 +53,6 @@ const Generator = () => {
       return;
     }
 
-    let amount: number;
-    let bm: number;
-    try {
-      amount = validateNumber(transactionAmount, "Nominal Transaksi", 13, 2);
-      bm = validateNumber(bmPercentage, "% BM", 3, 2, 0, 100);
-    } catch (error: any) {
-      toast.error(error.message);
-      return;
-    }
-
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -110,8 +60,8 @@ const Generator = () => {
         .insert({
           school_name: schoolName,
           po_number: poNumber,
-          transaction_amount: amount,
-          bm_percentage: bm,
+          transaction_amount: parseFloat(transactionAmount),
+          bm_percentage: parseFloat(bmPercentage),
           cabang,
           nama_siplah: namaSiplah,
           produk,
@@ -128,6 +78,7 @@ const Generator = () => {
         description: "Data transaksi telah disimpan.",
       });
 
+      // Reset form
       setSchoolName("");
       setPoNumber("");
       setTransactionAmount("");
@@ -204,7 +155,6 @@ const Generator = () => {
               <Input
                 id="transactionAmount"
                 type="number"
-                step="0.01"
                 value={transactionAmount}
                 onChange={(e) => setTransactionAmount(e.target.value)}
                 placeholder="Jumlah"
