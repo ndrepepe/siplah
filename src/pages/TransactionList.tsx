@@ -168,14 +168,13 @@ const TransactionList = () => {
                 <TableHead className="font-bold">Status</TableHead>
                 <TableHead className="font-bold">Kode Transaksi</TableHead>
                 <TableHead className="font-bold">Rekanan</TableHead>
-                <TableHead className="font-bold">Nama Rekanan</TableHead>
                 <TableHead className="font-bold text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-24 text-center">
+                  <TableCell colSpan={10} className="h-24 text-center">
                     <div className="flex items-center justify-center">
                       <Loader2 className="w-6 h-6 animate-spin mr-2" />
                       Memuat data...
@@ -184,7 +183,7 @@ const TransactionList = () => {
                 </TableRow>
               ) : filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
                     Tidak ada data ditemukan.
                   </TableCell>
                 </TableRow>
@@ -240,9 +239,6 @@ const TransactionList = () => {
                       <Badge variant={t.rekanan_type === "REKANAN" ? "default" : "secondary"}>
                         {t.rekanan_type}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {t.rekanan_type === "REKANAN" ? t.nama_rekanan : ""}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
