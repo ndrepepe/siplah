@@ -20,6 +20,46 @@ import {
 import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
 
+function validateNumber(value: string, fieldName: string, maxIntegerDigits: number, maxDecimalDigits: number, min?: number, max?: number): number {
+  const cleanValue = value.replace(/[^0-9.-]/g, '');
+  if (cleanValue === '' || cleanValue === '-' || cleanValue === '.') {
+    throw new Error(`${fieldName} tidak valid`);
+  }
+  
+  const num = parseFloat(cleanValue);
+  if (!isFinite(num)) {
+    throw new Error(`${fieldName} terlalu besar atau tidak valid`);
+  }
+  
+  const parts = cleanValue.split('.');
+  let integerPart = parts[0];
+  const decimalPart = parts[1] || '';
+  
+  const isNegative = integerPart.startsWith('-');
+  if (isNegative) {
+    integerPart = integerPart.slice(1);
+  }
+  
+  const integerDigits = integerPart.replace(/^0+/, '') || '0';
+  
+  if (integerDigits.length > maxIntegerDigits) {
+    throw new Error(`${fieldName} terlalu besar (maksimal ${maxIntegerDigits} digit sebelum koma)`);
+  }
+  
+  if (decimalPart.length > maxDecimalDigits) {
+    throw new Error(`${fieldName} terlalu banyak desimal (maksimal ${maxDecimalDigits} digit setelah koma)`);
+  }
+  
+  if (min !== undefined && num < min) {
+    throw new Error(`${fieldName} minimal ${min}`);
+  }
+  if (max !== undefined && num > max) {
+    throw new Error(`${fieldName} maksimal ${max}`);
+  }
+  
+  return num;
+}
+
 interface EditTransactionDialogProps {
   transaction: any;
   open: boolean;
@@ -47,12 +87,13 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
       return;
     }
 
-    // Clean numeric values
-    const cleanAmount = parseFloat(formData.transaction_amount.toString().replace(/[^0-9.]/g, ''));
-    const cleanBm = parseFloat(formData.bm_percentage.toString().replace(/[^0-9.]/g, ''));
-
-    if (isNaN(cleanAmount) || isNaN(cleanBm)) {
-      toast.error("Format angka tidak valid");
+    let cleanAmount: number;
+    let cleanBm: number;
+    try {
+      cleanAmount = validateNumber(formData.transaction_amount.toString(), "Nominal Transaksi", 13, 2);
+      cleanBm = validateNumber(formData.bm_percentage.toString(), "% BM", 3, 2, 0, 100);
+    } catch (error: any) {
+      toast.error(error.message);
       return;
     }
 
@@ -132,8 +173,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           <div className="space-y-2">
             <Label>Nominal (Rp)</Label>
             <Input 
-              type="text"
-              inputMode="numeric"
+              type="number"
+              step="0.01"
               value={formData.transaction_amount || ""} 
               onChange={(e) => setFormData({...formData, transaction_amount: e.target.value})}
             />
@@ -141,8 +182,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           <div className="space-y-2">
             <Label>% BM</Label>
             <Input 
-              type="text"
-              inputMode="decimal"
+              type="number"
+              step="0.01"
               value={formData.bm_percentage || ""} 
               onChange={(e) => setFormData({...formData, bm_percentage: e.target.value})}
             />
