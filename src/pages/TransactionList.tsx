@@ -97,19 +97,52 @@ const TransactionList = () => {
     }).format(amount);
   };
 
+  const exportToExcel = () => {
+    if (filteredTransactions.length === 0) {
+      toast.error("Tidak ada data untuk ekspor");
+      return;
+    }
+
+    // Create CSV content
+    const csvContent = "text/csv;charset=utf-8";
+    const data = filteredTransactions.map((t) => 
+      `${new Date(t.created_at).toLocaleDateString("id-ID")},${t.school_name},${t.po_number},${t.nama_siplah},${t.produk},${formatCurrency(t.transaction_amount)},${t.bm_percentage}%,${t.status},${t.code}`
+    ).join("\r\n");
+
+    // Create download link
+    const encodedUri = encodeURI(data);
+    const link = document.createElement("a");
+    link.setAttribute("href", "data:" + csvContent + "," + encodedUri);
+    link.setAttribute("download", "transaksi.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Card className="w-full shadow-lg border-t-4 border-t-primary">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={fetchTransactions}
-          disabled={loading}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={fetchTransactions}
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={exportToExcel}
+            className="text-blue-500 hover:text-blue-700"
+          >
+            <i className="fas fa-file-excel-spreadsheet w-4 h-4" />
+            Export ke Excel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex items-center mb-4 relative">
