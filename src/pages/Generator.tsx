@@ -25,6 +25,7 @@ const Generator = () => {
   const [produk, setProduk] = useState("");
   const [rekananType, setRekananType] = useState("");
   const [namaRekanan, setNamaRekanan] = useState("");
+  const [status, setStatus] = useState("DIAJUKAN"); // Add status state
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const { toast: showToast } = useToast();
@@ -52,6 +53,11 @@ const Generator = () => {
       return;
     }
 
+    if (!status) {
+      toast.error("Mohon pilih status transaksi");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -66,6 +72,7 @@ const Generator = () => {
           produk,
           rekanan_type: rekananType,
           nama_rekanan: rekananType === "REKANAN" ? namaRekanan : null,
+          status: status, // Include status in the insert
           code: generatedCode
         });
 
@@ -86,6 +93,7 @@ const Generator = () => {
       setProduk("");
       setRekananType("");
       setNamaRekanan("");
+      setStatus("DIAJUKAN"); // Reset status
       setGeneratedCode("");
     } catch (error: any) {
       console.error("Error saving data:", error);
@@ -197,20 +205,21 @@ const Generator = () => {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Conditional Field */}
-            {rekananType === "REKANAN" && (
-              <div className="space-y-2 md:col-span-2 animate-in fade-in slide-in-from-top-2">
-                <Label htmlFor="namaRekanan">Nama Rekanan</Label>
-                <Input
-                  id="namaRekanan"
-                  value={namaRekanan}
-                  onChange={(e) => setNamaRekanan(e.target.value)}
-                  placeholder="Masukkan Nama Rekanan"
-                  className="border-primary/50"
-                />
-              </div>
-            )}
+            {/* Add status field */}
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select onValueChange={setStatus} value={status}>
+                <SelectTrigger>
+                  <SelectValue className="text-center">
+                    {status}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
+                  <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2 pt-4 border-t">
