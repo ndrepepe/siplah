@@ -38,6 +38,8 @@ const Login = () => {
         <CardContent className="pb-8">
           <Auth
             supabaseClient={supabase}
+            view="sign_in"
+            showLinks={false}
             appearance={{ 
               theme: ThemeSupa,
               variables: {
@@ -64,13 +66,6 @@ const Login = () => {
                   loading_button_label: 'Memproses...',
                   social_provider_text: 'Masuk dengan {{provider}}',
                   link_text: 'Sudah punya akun? Masuk',
-                },
-                sign_up: {
-                  email_label: 'Alamat Email',
-                  password_label: 'Kata Sandi',
-                  button_label: 'Daftar Akun',
-                  loading_button_label: 'Mendaftar...',
-                  link_text: 'Belum punya akun? Daftar',
                 },
               },
             }}
