@@ -17,7 +17,7 @@ const Login = () => {
     <div 
       className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
       style={{ 
-        backgroundImage: "url('dyad-media://media/siplah/.dyad/media/291f0f74bdc025d42e9f44f62f5b0ad7.jpg')" 
+        backgroundImage: "url('https://images.alphacoders.com/132/1327357.png')" 
       }}
     >
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" />
