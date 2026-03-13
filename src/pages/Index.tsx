@@ -21,12 +21,12 @@ const Index = () => {
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ 
-        backgroundImage: "url('https://images.unsplash.com/photo-1505144808419-1957a94ca61e?q=80&w=2000&auto=format&fit=crop')" 
+        backgroundImage: "url('dyad-media://media/siplah/.dyad/media/291f0f74bdc025d42e9f44f62f5b0ad7.jpg')" 
       }}
     >
-      <div className="min-h-screen bg-slate-50/85 backdrop-blur-[2px] p-4 md:p-8">
+      <div className="min-h-screen bg-slate-50/80 backdrop-blur-[1px] p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white/80 p-6 rounded-2xl shadow-sm border border-white/20 backdrop-blur-md">
+          <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white/90 p-6 rounded-2xl shadow-sm border border-white/20 backdrop-blur-md">
             <div className="text-center md:text-left flex items-center gap-3">
               <div className="bg-primary p-2 rounded-lg text-white">
                 <Anchor className="w-8 h-8" />
