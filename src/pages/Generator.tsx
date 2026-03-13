@@ -25,7 +25,7 @@ const Generator = () => {
   const [produk, setProduk] = useState("");
   const [rekananType, setRekananType] = useState("");
   const [namaRekanan, setNamaRekanan] = useState("");
-  const [status, setStatus] = useState("DIAJUKAN"); // Add status state
+  const [status, setStatus] = useState("DIAJUKAN");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const { toast: showToast } = useToast();
@@ -72,7 +72,7 @@ const Generator = () => {
           produk,
           rekanan_type: rekananType,
           nama_rekanan: rekananType === "REKANAN" ? namaRekanan : null,
-          status: status, // Include status in the insert
+          status: status,
           code: generatedCode
         });
 
@@ -93,7 +93,7 @@ const Generator = () => {
       setProduk("");
       setRekananType("");
       setNamaRekanan("");
-      setStatus("DIAJUKAN"); // Reset status
+      setStatus("DIAJUKAN");
       setGeneratedCode("");
     } catch (error: any) {
       console.error("Error saving data:", error);
