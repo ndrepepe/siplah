@@ -43,7 +43,6 @@ const Generator = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // bmPercentage dihapus dari pengecekan wajib
     if (!schoolName || !poNumber || !transactionAmount || !generatedCode || !cabang || !namaSiplah || !produk || !rekananType) {
       toast.error("Mohon lengkapi semua field wajib");
       return;
@@ -62,7 +61,7 @@ const Generator = () => {
           school_name: schoolName,
           po_number: poNumber,
           transaction_amount: parseFloat(transactionAmount),
-          bm_percentage: bmPercentage ? parseFloat(bmPercentage) : 0, // Default ke 0 jika kosong
+          bm_percentage: bmPercentage ? parseFloat(bmPercentage) : 0,
           cabang,
           nama_siplah: namaSiplah,
           produk,
@@ -79,7 +78,6 @@ const Generator = () => {
         description: "Data transaksi telah disimpan.",
       });
 
-      // Reset form
       setSchoolName("");
       setPoNumber("");
       setTransactionAmount("");
@@ -129,10 +127,11 @@ const Generator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="poNumber">Nomor PO</Label>
+              <Label htmlFor="poNumber">Nomor PO (Maks 16 digit)</Label>
               <Input
                 id="poNumber"
                 value={poNumber}
+                maxLength={16}
                 onChange={(e) => setPoNumber(e.target.value)}
                 placeholder="Nomor PO"
               />
@@ -152,11 +151,14 @@ const Generator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="transactionAmount">Nominal Transaksi (Rp)</Label>
+              <Label htmlFor="transactionAmount">Nominal Transaksi (Maks 12 digit)</Label>
               <Input
                 id="transactionAmount"
                 type="number"
                 value={transactionAmount}
+                onInput={(e: any) => {
+                  if (e.target.value.length > 12) e.target.value = e.target.value.slice(0, 12);
+                }}
                 onChange={(e) => setTransactionAmount(e.target.value)}
                 placeholder="Jumlah"
               />
