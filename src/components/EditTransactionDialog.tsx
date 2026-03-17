@@ -42,17 +42,18 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
   }, [transaction]);
 
   const handleSave = async () => {
-    if (!formData.school_name || !formData.po_number || !formData.transaction_amount || !formData.bm_percentage) {
+    // bm_percentage dihapus dari pengecekan wajib
+    if (!formData.school_name || !formData.po_number || !formData.transaction_amount) {
       toast.error("Mohon lengkapi field wajib");
       return;
     }
 
     // Clean numeric values
     const cleanAmount = parseFloat(formData.transaction_amount.toString().replace(/[^0-9.]/g, ''));
-    const cleanBm = parseFloat(formData.bm_percentage.toString().replace(/[^0-9.]/g, ''));
+    const cleanBm = formData.bm_percentage ? parseFloat(formData.bm_percentage.toString().replace(/[^0-9.]/g, '')) : 0;
 
-    if (isNaN(cleanAmount) || isNaN(cleanBm)) {
-      toast.error("Format angka tidak valid");
+    if (isNaN(cleanAmount)) {
+      toast.error("Format nominal tidak valid");
       return;
     }
 
@@ -139,7 +140,7 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
             />
           </div>
           <div className="space-y-2">
-            <Label>% BM</Label>
+            <Label>% BM (Opsional)</Label>
             <Input 
               type="text"
               inputMode="decimal"

@@ -43,7 +43,8 @@ const Generator = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!schoolName || !poNumber || !transactionAmount || !bmPercentage || !generatedCode || !cabang || !namaSiplah || !produk || !rekananType) {
+    // bmPercentage dihapus dari pengecekan wajib
+    if (!schoolName || !poNumber || !transactionAmount || !generatedCode || !cabang || !namaSiplah || !produk || !rekananType) {
       toast.error("Mohon lengkapi semua field wajib");
       return;
     }
@@ -61,7 +62,7 @@ const Generator = () => {
           school_name: schoolName,
           po_number: poNumber,
           transaction_amount: parseFloat(transactionAmount),
-          bm_percentage: parseFloat(bmPercentage),
+          bm_percentage: bmPercentage ? parseFloat(bmPercentage) : 0, // Default ke 0 jika kosong
           cabang,
           nama_siplah: namaSiplah,
           produk,
@@ -161,7 +162,7 @@ const Generator = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bmPercentage">% BM</Label>
+              <Label htmlFor="bmPercentage">% BM (Opsional)</Label>
               <Input
                 id="bmPercentage"
                 type="number"
