@@ -111,10 +111,12 @@ const TransactionList = () => {
   };
 
   const filteredTransactions = transactions.filter((t) => {
+    const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
-      t.school_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.code.toLowerCase().includes(searchTerm.toLowerCase());
+      t.school_name.toLowerCase().includes(searchLower) ||
+      t.po_number.toLowerCase().includes(searchLower) ||
+      t.code.toLowerCase().includes(searchLower) ||
+      (t.nama_rekanan && t.nama_rekanan.toLowerCase().includes(searchLower));
     
     const matchesPrintFilter = 
       printFilter === "all" ? true :
@@ -247,7 +249,7 @@ const TransactionList = () => {
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Cari Sekolah, No PO, atau Kode..."
+              placeholder="Cari Sekolah, No PO, Kode, atau Rekanan..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
