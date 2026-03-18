@@ -386,35 +386,37 @@ const TransactionList = () => {
                         >
                           <FileDown className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          onClick={() => {
-                            setEditingTransaction(t);
-                            setIsEditDialogOpen(true);
-                          }}
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
                         {!t.is_printed && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              toast.error("Perhatian: Data transaksi akan dihapus permanen. Tekan 'Hapus' untuk melanjutkan.", {
-                                duration: 5000,
-                                position: "top-right",
-                              });
-                              setDeletingId(t.id);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => {
+                                setEditingTransaction(t);
+                                setIsEditDialogOpen(true);
+                              }}
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                toast.error("Perhatian: Data transaksi akan dihapus permanen. Tekan 'Hapus' untuk melanjutkan.", {
+                                  duration: 5000,
+                                  position: "top-right",
+                                });
+                                setDeletingId(t.id);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
                         )}
                       </div>
                     </TableCell>
