@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -86,6 +86,22 @@ const TransactionList = () => {
     }
   };
 
+  const handlePrint = async (transactionId: string) => {
+    try {
+      const { error } = await supabase
+        .from("transactions")
+        .update({ is_printed: true })
+        .eq("id", transactionId);
+
+      if (error) throw error;
+
+      toast.success("Transaksi telah ditandai sebagai sudah di-print");
+      fetchTransactions();
+    } catch (error: any) {
+      toast.error("Gagal menandai transaksi: " + error.message);
+    }
+  };
+
   const filteredTransactions = transactions.filter((t) =>
     t.school_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,7 +123,7 @@ const TransactionList = () => {
     }
 
     const ws_data = [
-      ["Tanggal", "Sekolah / Cabang", "No PO / SIPLAH", "Produk", "Nominal", "% BM", "Status", "Kode Transaksi", "Rekanan", "Nama Rekanan"]
+      ["Tanggal", "Sekolah / Cabang", "No PO / SIPLAH", "Produk", "Nominal", "% BM", "Status", "Kode Transaksi", "Rekanan", "Nama Rekanan", "Status Print"]
     ];
 
     filteredTransactions.forEach(t => {
@@ -121,7 +137,8 @@ const TransactionList = () => {
         t.status,
         t.code,
         t.rekanan_type,
-        t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"
+        t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN",
+        t.is_printed ? "SUDAH PRINT" : "BELUM PRINT"
       ]);
     });
 
@@ -163,7 +180,8 @@ const TransactionList = () => {
       ["Status", t.status],
       ["Kode Transaksi", t.code],
       ["Tipe Rekanan", t.rekanan_type],
-      ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"]
+      ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"],
+      ["Status Print", t.is_printed ? "SUDAH PRINT" : "BELUM PRINT"]
     ];
 
     autoTable(doc, {
@@ -233,13 +251,14 @@ const TransactionList = () => {
                 <TableHead className="font-bold">Kode Transaksi</TableHead>
                 <TableHead className="font-bold">Rekanan</TableHead>
                 <TableHead className="font-bold">Nama Rekanan</TableHead>
+                <TableHead className="font-bold text-center">Print</TableHead>
                 <TableHead className="font-bold text-center">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-24 text-center">
+                  <TableCell colSpan={12} className="h-24 text-center">
                     <div className="flex items-center justify-center">
                       <Loader2 className="w-6 h-6 animate-spin mr-2" />
                       Memuat data...
@@ -248,7 +267,7 @@ const TransactionList = () => {
                 </TableRow>
               ) : filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
                     Tidak ada data ditemukan.
                   </TableCell>
                 </TableRow>
@@ -308,6 +327,23 @@ const TransactionList = () => {
                     <TableCell className="font-medium">
                       {t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"}
                     </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {t.is_printed ? (
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handlePrint(t.id)}
+                            title="Tandai sebagai sudah di-print"
+                          >
+                            <Circle className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-1">
                         <Button
@@ -331,18 +367,20 @@ const TransactionList = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => {
-                            setDeletingId(t.id);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {!t.is_printed && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => {
+                              setDeletingId(t.id);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
