@@ -14,28 +14,23 @@ const Login = () => {
   }
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
-      style={{ 
-        backgroundImage: "url('/background.jpeg')" 
-      }}
-    >
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FA5C5C] via-[#FD8A6B] to-[#FEC288]">
+      <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]" />
       
-      <Card className="w-full max-w-md shadow-2xl border-none relative z-10 bg-white/95 backdrop-blur-md overflow-hidden">
-        <div className="h-2 bg-primary w-full" />
-        <CardHeader className="space-y-2 text-center pt-8">
-          <div className="mx-auto bg-primary w-16 h-16 rounded-full flex items-center justify-center text-white mb-2 shadow-lg">
-            <Anchor className="w-8 h-8" />
+      <Card className="w-full max-w-md shadow-2xl border-none relative z-10 bg-white/95 backdrop-blur-md overflow-hidden rounded-[2rem]">
+        <div className="h-3 bg-gradient-to-r from-[#FA5C5C] to-[#FBEF76] w-full" />
+        <CardHeader className="space-y-2 text-center pt-10">
+          <div className="mx-auto bg-primary w-20 h-20 rounded-3xl flex items-center justify-center text-white mb-4 shadow-xl shadow-primary/30 rotate-3">
+            <Anchor className="w-10 h-10" />
           </div>
-          <CardTitle className="text-3xl font-black tracking-tighter text-slate-900">
+          <CardTitle className="text-4xl font-black tracking-tighter text-slate-900">
             GRAND LINE
           </CardTitle>
-          <p className="text-sm text-muted-foreground font-medium">
-            Masuk untuk memulai petualangan transaksi Anda
+          <p className="text-sm text-primary font-bold uppercase tracking-widest">
+            Transaction Portal
           </p>
         </CardHeader>
-        <CardContent className="pb-8">
+        <CardContent className="pb-10 px-8">
           <Auth
             supabaseClient={supabase}
             view="sign_in"
@@ -46,11 +41,14 @@ const Login = () => {
                 default: {
                   colors: {
                     brand: 'hsl(var(--primary))',
-                    brandAccent: 'hsl(var(--primary))',
+                    brandAccent: 'hsl(var(--secondary))',
+                    inputBackground: 'white',
+                    inputText: 'black',
+                    inputPlaceholder: 'gray',
                   },
                   radii: {
-                    borderRadiusButton: '0.75rem',
-                    inputBorderRadius: '0.75rem',
+                    borderRadiusButton: '1rem',
+                    inputBorderRadius: '1rem',
                   }
                 }
               }
