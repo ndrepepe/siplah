@@ -14,11 +14,11 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FA5C5C] via-[#FD8A6B] to-[#FEC288]">
-      <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#640D5F] via-[#B12C00] to-[#EB5B00]">
+      <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px]" />
       
       <Card className="w-full max-w-md shadow-2xl border-none relative z-10 bg-white/95 backdrop-blur-md overflow-hidden rounded-[2rem]">
-        <div className="h-3 bg-gradient-to-r from-[#FA5C5C] to-[#FBEF76] w-full" />
+        <div className="h-3 bg-gradient-to-r from-[#640D5F] via-[#EB5B00] to-[#FFCC00] w-full" />
         <CardHeader className="space-y-2 text-center pt-10">
           <div className="mx-auto bg-primary w-20 h-20 rounded-3xl flex items-center justify-center text-white mb-4 shadow-xl shadow-primary/30 rotate-3">
             <Anchor className="w-10 h-10" />
