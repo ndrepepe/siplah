@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -28,12 +28,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import EditTransactionDialog from "@/components/EditTransactionDialog";
 
 const TransactionList = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [printFilter, setPrintFilter] = useState<string>("all");
 
   // State for Edit
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
@@ -102,11 +110,19 @@ const TransactionList = () => {
     }
   };
 
-  const filteredTransactions = transactions.filter((t) =>
-    t.school_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTransactions = transactions.filter((t) => {
+    const matchesSearch = 
+      t.school_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.po_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.code.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesPrintFilter = 
+      printFilter === "all" ? true :
+      printFilter === "printed" ? t.is_printed === true :
+      t.is_printed === false || t.is_printed === null;
+
+    return matchesSearch && matchesPrintFilter;
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -203,9 +219,9 @@ const TransactionList = () => {
 
   return (
     <Card className="w-full shadow-lg border-t-4 border-t-primary">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 pb-4">
         <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -227,14 +243,29 @@ const TransactionList = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center mb-4 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Cari Sekolah, No PO, atau Kode..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder="Cari Sekolah, No PO, atau Kode..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Select value={printFilter} onValueChange={setPrintFilter}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Filter Print" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="printed">Sudah Print</SelectItem>
+                <SelectItem value="not_printed">Belum Print</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="rounded-md border overflow-x-auto">
