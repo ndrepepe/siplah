@@ -158,8 +158,7 @@ const TransactionList = () => {
 
   const downloadPDF = (t: any) => {
     const doc = new jsPDF();
-    
-    // Header
+        // Header
     doc.setFontSize(18);
     doc.text("Detail Transaksi", 14, 22);
     doc.setFontSize(11);
@@ -273,8 +272,7 @@ const TransactionList = () => {
                 </TableRow>
               ) : (
                 filteredTransactions.map((t) => (
-                  <TableRow
-                    key={t.id}
+                  <TableRow                    key={t.id}
                     className={cn(
                       "transition-colors",
                       t.status === "DIBATALKAN" ? "bg-pink-50 hover:bg-pink-100" : "hover:bg-muted/30"
@@ -373,6 +371,11 @@ const TransactionList = () => {
                             size="icon"
                             className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => {
+                              // Show warning toast before opening delete dialog
+                              toast.error("Perhatian: Data transaksi akan dihapus permanen. Tekan 'Hapus' untuk melanjutkan.", {
+                                duration: 5000,
+                                position: "top-right",
+                              });
                               setDeletingId(t.id);
                               setIsDeleteDialogOpen(true);
                             }}
@@ -403,7 +406,7 @@ const TransactionList = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Data transaksi ini akan dihapus secara permanen dari database.
+              Menghapus data transaksi ini akan menghapus semua informasi terkait. Apakah Anda yakin?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
