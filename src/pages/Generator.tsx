@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, RefreshCw, Save, MessageSquare } from "lucide-react";
+import { Loader2, RefreshCw, Save } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -42,15 +42,19 @@ const Generator = () => {
 
   const sendWhatsAppNotification = async (data: any) => {
     try {
-      console.log("Memanggil notifikasi WhatsApp...");
-      const { error } = await supabase.functions.invoke('send-whatsapp', {
+      console.log("Memicu notifikasi WhatsApp...");
+      const { data: response, error } = await supabase.functions.invoke('send-whatsapp', {
         body: data
       });
-      if (error) throw error;
-      console.log("Notifikasi WhatsApp terkirim.");
+      
+      if (error) {
+        console.error("Edge Function Error:", error);
+        return;
+      }
+      
+      console.log("Respon WhatsApp:", response);
     } catch (err) {
-      console.error("Gagal mengirim WhatsApp:", err);
-      // Kita tidak menampilkan error ke user agar tidak mengganggu alur utama simpan data
+      console.error("Gagal memanggil fungsi WhatsApp:", err);
     }
   };
 
@@ -89,7 +93,7 @@ const Generator = () => {
 
       if (error) throw error;
 
-      // Kirim Notifikasi WhatsApp secara background
+      // Kirim Notifikasi WhatsApp
       sendWhatsAppNotification({
         school_name: schoolName,
         po_number: poNumber,
@@ -99,7 +103,7 @@ const Generator = () => {
 
       showToast({
         title: "Berhasil!",
-        description: "Data transaksi disimpan & Notifikasi dikirim.",
+        description: "Data transaksi disimpan. Notifikasi sedang diproses.",
       });
 
       // Reset Form
