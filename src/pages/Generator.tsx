@@ -156,11 +156,11 @@ const Generator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="poNumber">Nomor PO (Maks 16 digit)</Label>
+              <Label htmlFor="poNumber">Nomor PO (Maks 21 digit)</Label>
               <Input
                 id="poNumber"
                 value={poNumber}
-                maxLength={16}
+                maxLength={21}
                 onChange={(e) => setPoNumber(e.target.value)}
                 placeholder="Nomor PO"
               />
