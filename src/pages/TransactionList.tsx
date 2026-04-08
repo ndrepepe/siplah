@@ -182,46 +182,68 @@ const TransactionList = () => {
   const downloadPDF = (t: any) => {
     const doc = new jsPDF();
     
-    // Header
-    doc.setFontSize(18);
-    doc.text("Detail Transaksi", 14, 22);
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`Dicetak pada: ${new Date().toLocaleString("id-ID")}`, 14, 30);
+    // Header - Lebih compact
+    doc.setFontSize(16);
+    doc.setTextColor(30, 41, 59);
+    doc.text("BUKTI TRANSAKSI - GRAND LINE", 14, 15);
     
-    // Data rows for vertical layout
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    doc.text(`Kode: ${t.code}`, 14, 22);
+    doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 27);
+    
+    // Garis pemisah
+    doc.setDrawColor(200);
+    doc.line(14, 32, 196, 32);
+    
+    // Data rows - Disederhanakan agar pasti 1 halaman
     const tableData = [
-      ["ID Transaksi", t.id],
-      ["Tanggal", new Date(t.created_at).toLocaleDateString("id-ID")],
+      ["Tanggal Input", new Date(t.created_at).toLocaleDateString("id-ID")],
       ["Nama Sekolah", t.school_name],
       ["Cabang", t.cabang || "-"],
       ["Nomor PO", t.po_number],
-      ["Nama SIPLAH", t.nama_siplah],
-      ["Produk", t.produk],
+      ["Platform SIPLAH", t.nama_siplah],
+      ["Jenis Produk", t.produk],
       ["Nominal Transaksi", formatCurrency(t.transaction_amount)],
       ["Persentase BM", `${t.bm_percentage}%`],
-      ["Status", t.status],
-      ["Kode Transaksi", t.code],
+      ["Status Transaksi", t.status],
       ["Tipe Rekanan", t.rekanan_type],
       ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"],
+      ["", ""], // Spacer
+      ["INFORMASI PEMBAYARAN BM", ""],
       ["Nama Bank", t.bank_name || "-"],
       ["Nomor Rekening", t.account_number || "-"],
       ["Pemilik Rekening", t.account_owner || "-"],
-      ["Status Print", t.is_printed ? "SUDAH PRINT" : "BELUM PRINT"]
     ];
 
     autoTable(doc, {
-      startY: 40,
-      head: [["Field", "Informasi"]],
+      startY: 35,
       body: tableData,
-      theme: 'striped',
-      headStyles: { fillColor: [30, 41, 59] },
-      styles: { fontSize: 10, cellPadding: 5 },
+      theme: 'plain',
+      styles: { 
+        fontSize: 10, 
+        cellPadding: 3,
+        textColor: [50, 50, 50]
+      },
       columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50 },
+        0: { fontStyle: 'bold', cellWidth: 60, textColor: [30, 41, 59] },
         1: { cellWidth: 'auto' }
+      },
+      didParseCell: function(data) {
+        // Style untuk header section di dalam tabel
+        if (data.row.raw[0] === "INFORMASI PEMBAYARAN BM") {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [241, 245, 249];
+          data.cell.styles.textColor = [30, 41, 59];
+        }
       }
     });
+
+    // Footer
+    const finalY = (doc as any).lastAutoTable.finalY || 150;
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Dokumen ini dihasilkan secara otomatis oleh Grand Line Manager.", 14, finalY + 10);
 
     doc.save(`transaksi-${t.code}.pdf`);
     toast.success("PDF berhasil diunduh");
