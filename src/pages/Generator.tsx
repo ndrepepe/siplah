@@ -268,7 +268,7 @@ const Generator = () => {
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">BM diberikan melalui</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="bankName">Nama Bank</Label>
+                  <Label htmlFor="bankName">Nama Bank (Opsional)</Label>
                   <Input
                     id="bankName"
                     value={bankName}
@@ -277,7 +277,7 @@ const Generator = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="accountNumber">Nomor Rekening</Label>
+                  <Label htmlFor="accountNumber">Nomor Rekening (Opsional)</Label>
                   <Input
                     id="accountNumber"
                     value={accountNumber}
@@ -286,7 +286,7 @@ const Generator = () => {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="accountOwner">Pemilik Rekening</Label>
+                  <Label htmlFor="accountOwner">Pemilik Rekening (Opsional)</Label>
                   <Input
                     id="accountOwner"
                     value={accountOwner}
