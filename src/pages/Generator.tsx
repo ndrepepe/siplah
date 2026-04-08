@@ -25,6 +25,9 @@ const Generator = () => {
   const [produk, setProduk] = useState("");
   const [rekananType, setRekananType] = useState("");
   const [namaRekanan, setNamaRekanan] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountOwner, setAccountOwner] = useState("");
   const [status, setStatus] = useState("DIAJUKAN");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -87,6 +90,9 @@ const Generator = () => {
           produk,
           rekanan_type: rekananType,
           nama_rekanan: rekananType === "REKANAN" ? namaRekanan : null,
+          bank_name: bankName,
+          account_number: accountNumber,
+          account_owner: accountOwner,
           status: status,
           code: generatedCode
         });
@@ -116,6 +122,9 @@ const Generator = () => {
       setProduk("");
       setRekananType("");
       setNamaRekanan("");
+      setBankName("");
+      setAccountNumber("");
+      setAccountOwner("");
       setStatus("DIAJUKAN");
       setGeneratedCode("");
     } catch (error: any) {
@@ -253,6 +262,34 @@ const Generator = () => {
                 />
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="bankName">Nama Bank</Label>
+              <Input
+                id="bankName"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="Contoh: BCA, Mandiri"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="accountNumber">Nomor Rekening</Label>
+              <Input
+                id="accountNumber"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                placeholder="Nomor Rekening"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="accountOwner">Pemilik Rekening</Label>
+              <Input
+                id="accountOwner"
+                value={accountOwner}
+                onChange={(e) => setAccountOwner(e.target.value)}
+                placeholder="Nama Pemilik Rekening"
+              />
+            </div>
           </div>
 
           <div className="space-y-2 pt-4 border-t">

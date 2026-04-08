@@ -42,7 +42,6 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
   }, [transaction]);
 
   const handleSave = async () => {
-    // bm_percentage dihapus dari pengecekan wajib
     if (!formData.school_name || !formData.po_number || !formData.transaction_amount) {
       toast.error("Mohon lengkapi field wajib");
       return;
@@ -71,6 +70,9 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           produk: formData.produk,
           rekanan_type: formData.rekanan_type,
           nama_rekanan: formData.rekanan_type === "REKANAN" ? formData.nama_rekanan : null,
+          bank_name: formData.bank_name,
+          account_number: formData.account_number,
+          account_owner: formData.account_owner,
           status: formData.status,
         })
         .eq("id", transaction.id);
@@ -198,6 +200,28 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
               />
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label>Nama Bank</Label>
+            <Input 
+              value={formData.bank_name || ""} 
+              onChange={(e) => setFormData({...formData, bank_name: e.target.value})}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Nomor Rekening</Label>
+            <Input 
+              value={formData.account_number || ""} 
+              onChange={(e) => setFormData({...formData, account_number: e.target.value})}
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Pemilik Rekening</Label>
+            <Input 
+              value={formData.account_owner || ""} 
+              onChange={(e) => setFormData({...formData, account_owner: e.target.value})}
+            />
+          </div>
 
           <div className="space-y-2 md:col-span-2">
             <Label className="text-muted-foreground">Kode Transaksi (Tidak dapat diubah)</Label>

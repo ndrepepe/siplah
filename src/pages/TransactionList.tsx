@@ -116,7 +116,9 @@ const TransactionList = () => {
       t.school_name.toLowerCase().includes(searchLower) ||
       t.po_number.toLowerCase().includes(searchLower) ||
       t.code.toLowerCase().includes(searchLower) ||
-      (t.nama_rekanan && t.nama_rekanan.toLowerCase().includes(searchLower));
+      (t.nama_rekanan && t.nama_rekanan.toLowerCase().includes(searchLower)) ||
+      (t.bank_name && t.bank_name.toLowerCase().includes(searchLower)) ||
+      (t.account_owner && t.account_owner.toLowerCase().includes(searchLower));
     
     const matchesPrintFilter = 
       printFilter === "all" ? true :
@@ -141,7 +143,7 @@ const TransactionList = () => {
     }
 
     const ws_data = [
-      ["Tanggal", "Sekolah / Cabang", "No PO / SIPLAH", "Produk", "Nominal", "% BM", "Status", "Kode Transaksi", "Rekanan", "Nama Rekanan", "Status Print"]
+      ["Tanggal", "Sekolah / Cabang", "No PO / SIPLAH", "Produk", "Nominal", "% BM", "Status", "Kode Transaksi", "Rekanan", "Nama Rekanan", "Bank", "No Rekening", "Pemilik Rekening", "Status Print"]
     ];
 
     filteredTransactions.forEach(t => {
@@ -156,6 +158,9 @@ const TransactionList = () => {
         t.code,
         t.rekanan_type,
         t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN",
+        t.bank_name || "-",
+        t.account_number || "-",
+        t.account_owner || "-",
         t.is_printed ? "SUDAH PRINT" : "BELUM PRINT"
       ]);
     });
@@ -199,6 +204,9 @@ const TransactionList = () => {
       ["Kode Transaksi", t.code],
       ["Tipe Rekanan", t.rekanan_type],
       ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"],
+      ["Nama Bank", t.bank_name || "-"],
+      ["Nomor Rekening", t.account_number || "-"],
+      ["Pemilik Rekening", t.account_owner || "-"],
       ["Status Print", t.is_printed ? "SUDAH PRINT" : "BELUM PRINT"]
     ];
 
@@ -249,7 +257,7 @@ const TransactionList = () => {
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Cari Sekolah, No PO, Kode, atau Rekanan..."
+              placeholder="Cari Sekolah, No PO, Kode, Rekanan, atau Bank..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -283,7 +291,7 @@ const TransactionList = () => {
                 <TableHead className="font-bold">Status</TableHead>
                 <TableHead className="font-bold">Kode Transaksi</TableHead>
                 <TableHead className="font-bold">Rekanan</TableHead>
-                <TableHead className="font-bold">Nama Rekanan</TableHead>
+                <TableHead className="font-bold">Bank / Rekening</TableHead>
                 <TableHead className="font-bold text-center">Print</TableHead>
                 <TableHead className="font-bold text-center">Aksi</TableHead>
               </TableRow>
@@ -353,12 +361,15 @@ const TransactionList = () => {
                       </code>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={t.rekanan_type === "REKANAN" ? "default" : "secondary"}>
-                        {t.rekanan_type}
-                      </Badge>
+                      <div className="font-medium">{t.rekanan_type}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"}
+                      </div>
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"}
+                    <TableCell>
+                      <div className="font-medium">{t.bank_name || "-"}</div>
+                      <div className="text-xs text-muted-foreground">{t.account_number || "-"}</div>
+                      <div className="text-[10px] italic">{t.account_owner || "-"}</div>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
