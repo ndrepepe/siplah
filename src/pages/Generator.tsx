@@ -263,32 +263,38 @@ const Generator = () => {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="bankName">Nama Bank</Label>
-              <Input
-                id="bankName"
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                placeholder="Contoh: BCA, Mandiri"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="accountNumber">Nomor Rekening</Label>
-              <Input
-                id="accountNumber"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                placeholder="Nomor Rekening"
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="accountOwner">Pemilik Rekening</Label>
-              <Input
-                id="accountOwner"
-                value={accountOwner}
-                onChange={(e) => setAccountOwner(e.target.value)}
-                placeholder="Nama Pemilik Rekening"
-              />
+            {/* Group: BM diberikan melalui */}
+            <div className="md:col-span-2 space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">BM diberikan melalui</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bankName">Nama Bank</Label>
+                  <Input
+                    id="bankName"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="Contoh: BCA, Mandiri"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Nomor Rekening</Label>
+                  <Input
+                    id="accountNumber"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="Nomor Rekening"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="accountOwner">Pemilik Rekening</Label>
+                  <Input
+                    id="accountOwner"
+                    value={accountOwner}
+                    onChange={(e) => setAccountOwner(e.target.value)}
+                    placeholder="Nama Pemilik Rekening"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
