@@ -4,8 +4,9 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import Generator from "./Generator";
 import TransactionList from "./TransactionList";
 import Dashboard from "./Dashboard";
+import BulkImport from "@/components/BulkImport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard } from "lucide-react";
+import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,27 +59,34 @@ const Index = () => {
 
         <Tabs defaultValue="dashboard" className="w-full">
           <div className="flex justify-center mb-8">
-            <TabsList className="grid w-full max-w-xl grid-cols-3 h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10">
+            <TabsList className="grid w-full max-w-2xl grid-cols-4 h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10">
               <TabsTrigger 
                 value="dashboard" 
-                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-base font-bold transition-all"
+                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-sm md:text-base font-bold transition-all"
               >
-                <LayoutDashboard className="w-5 h-5" />
-                Dashboard
+                <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">Dashboard</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="input" 
-                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-base font-bold transition-all"
+                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-sm md:text-base font-bold transition-all"
               >
-                <PlusCircle className="w-5 h-5" />
-                Input Data
+                <PlusCircle className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">Input</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="bulk" 
+                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-sm md:text-base font-bold transition-all"
+              >
+                <FileSpreadsheet className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">Bulk</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="list" 
-                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-base font-bold transition-all"
+                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-sm md:text-base font-bold transition-all"
               >
-                <ClipboardList className="w-5 h-5" />
-                Daftar Data
+                <ClipboardList className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">Daftar</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -89,6 +97,10 @@ const Index = () => {
 
           <TabsContent value="input" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <Generator />
+          </TabsContent>
+
+          <TabsContent value="bulk" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <BulkImport />
           </TabsContent>
 
           <TabsContent value="list" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
