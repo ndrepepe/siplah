@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,29 +25,99 @@ const BulkImport = () => {
     return result;
   };
 
-  const templateData = [
-    {
-      "Nama Sekolah": "SDN 01 Contoh",
-      "No PO": "PO/2024/001",
-      "Nilai Transaksi": 5000000,
-      "Persentase BM": 10,
-      "Cabang": "Jakarta",
-      "Nama Siplah": "LADANG",
-      "Produk": "BOOK",
-      "Tipe Rekanan": "REKANAN",
-      "Nama Rekanan": "CV Maju Jaya",
-      "Nama Bank": "BCA",
-      "No Rekening": "1234567890",
-      "Pemilik Rekening": "Budi Sudarsono"
-    }
-  ];
+  const downloadTemplate = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Template Transaksi');
 
-  const downloadTemplate = () => {
-    const ws = XLSX.utils.json_to_sheet(templateData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template Transaksi");
-    XLSX.writeFile(wb, "Template_Import_Transaksi.xlsx");
-    toast.success("Template berhasil diunduh");
+    // Define Columns
+    worksheet.columns = [
+      { header: 'Nama Sekolah', key: 'school_name', width: 30 },
+      { header: 'No PO', key: 'po_number', width: 20 },
+      { header: 'Nilai Transaksi', key: 'amount', width: 20 },
+      { header: 'Persentase BM', key: 'bm', width: 15 },
+      { header: 'Cabang', key: 'cabang', width: 20 },
+      { header: 'Nama Siplah', key: 'siplah', width: 15 },
+      { header: 'Produk', key: 'produk', width: 15 },
+      { header: 'Tipe Rekanan', key: 'rekanan_type', width: 15 },
+      { header: 'Nama Rekanan', key: 'rekanan_name', width: 25 },
+      { header: 'Nama Bank', key: 'bank', width: 15 },
+      { header: 'No Rekening', key: 'acc_no', width: 20 },
+      { header: 'Pemilik Rekening', key: 'acc_owner', width: 25 },
+    ];
+
+    // Add Sample Data
+    worksheet.addRow({
+      school_name: 'SDN 01 Contoh',
+      po_number: 'PO/2024/001',
+      amount: 5000000,
+      bm: 10,
+      cabang: 'Jakarta',
+      siplah: 'LADANG',
+      produk: 'BOOK',
+      rekanan_type: 'REKANAN',
+      rekanan_name: 'CV Maju Jaya',
+      bank: 'BCA',
+      acc_no: '1234567890',
+      acc_owner: 'Budi Sudarsono'
+    });
+
+    // Style Header
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF640D5F' }
+    };
+    worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+
+    // Add Data Validation (Dropdowns) for 1000 rows
+    const siplahOptions = ['LADANG', 'TELKOM', 'BLIBLI'];
+    const produkOptions = ['NONBOOK', 'BOOK'];
+    const rekananOptions = ['NON REKANAN', 'REKANAN'];
+
+    for (let i = 2; i <= 1000; i++) {
+      // Nama Siplah (Column F)
+      worksheet.getCell(`F${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${siplahOptions.join(',')}"`],
+        showErrorMessage: true,
+        errorTitle: 'Input Tidak Valid',
+        error: 'Silakan pilih dari daftar yang tersedia'
+      };
+
+      // Produk (Column G)
+      worksheet.getCell(`G${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${produkOptions.join(',')}"`],
+        showErrorMessage: true,
+        errorTitle: 'Input Tidak Valid',
+        error: 'Silakan pilih dari daftar yang tersedia'
+      };
+
+      // Tipe Rekanan (Column H)
+      worksheet.getCell(`H${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${rekananOptions.join(',')}"`],
+        showErrorMessage: true,
+        errorTitle: 'Input Tidak Valid',
+        error: 'Silakan pilih dari daftar yang tersedia'
+      };
+    }
+
+    // Generate and Download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'Template_Import_Transaksi.xlsx';
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast.success("Template dengan pilihan dropdown berhasil diunduh");
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +158,7 @@ const BulkImport = () => {
         po_number: row["No PO"] || "",
         transaction_amount: Number(row["Nilai Transaksi"]) || 0,
         bm_percentage: Number(row["Persentase BM"]) || 0,
-        code: generateTransactionCode(), // Auto-generate code here
+        code: generateTransactionCode(),
         cabang: row["Cabang"] || "",
         nama_siplah: row["Nama Siplah"] || "",
         produk: row["Produk"] || "",
@@ -99,7 +170,6 @@ const BulkImport = () => {
         status: "DIAJUKAN"
       }));
 
-      // Validate required fields
       const invalidRows = formattedData.filter(r => !r.school_name || !r.po_number);
       if (invalidRows.length > 0) {
         toast.error("Beberapa baris tidak memiliki Nama Sekolah atau No PO");
@@ -144,7 +214,7 @@ const BulkImport = () => {
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">1</span>
                 Unduh Template
               </h3>
-              <p className="text-sm text-slate-500">Format Excel untuk iput masal. Kode Transaksi akan secara otomatis dibuat oleh sistem.</p>
+              <p className="text-sm text-slate-500">Format Excel untuk iput masal. Kolom Nama Siplah, Produk, dan Rekanan kini memiliki pilihan dropdown.</p>
               <Button 
                 onClick={downloadTemplate} 
                 variant="outline" 
