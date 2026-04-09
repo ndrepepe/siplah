@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -36,12 +36,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import EditTransactionDialog from "@/components/EditTransactionDialog";
+import { Label } from "@/components/ui/label";
 
 const TransactionList = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [printFilter, setPrintFilter] = useState<string>("all");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   // State for Edit
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
@@ -125,7 +128,12 @@ const TransactionList = () => {
       printFilter === "printed" ? t.is_printed === true :
       t.is_printed === false || t.is_printed === null;
 
-    return matchesSearch && matchesPrintFilter;
+    // Date filtering
+    const transactionDate = new Date(t.created_at).toISOString().split('T')[0];
+    const matchesStartDate = startDate ? transactionDate >= startDate : true;
+    const matchesEndDate = endDate ? transactionDate <= endDate : true;
+
+    return matchesSearch && matchesPrintFilter && matchesStartDate && matchesEndDate;
   });
 
   const formatCurrency = (amount: number) => {
@@ -182,7 +190,6 @@ const TransactionList = () => {
   const downloadPDF = (t: any) => {
     const doc = new jsPDF();
     
-    // Header - Lebih compact
     doc.setFontSize(16);
     doc.setTextColor(30, 41, 59);
     doc.text("BUKTI TRANSAKSI - GRAND LINE", 14, 15);
@@ -192,11 +199,9 @@ const TransactionList = () => {
     doc.text(`Kode: ${t.code}`, 14, 22);
     doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 27);
     
-    // Garis pemisah
     doc.setDrawColor(200);
     doc.line(14, 32, 196, 32);
     
-    // Data rows - Disederhanakan agar pasti 1 halaman
     const tableData = [
       ["Tanggal Input", new Date(t.created_at).toLocaleDateString("id-ID")],
       ["Nama Sekolah", t.school_name],
@@ -209,7 +214,7 @@ const TransactionList = () => {
       ["Status Transaksi", t.status],
       ["Tipe Rekanan", t.rekanan_type],
       ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"],
-      ["", ""], // Spacer
+      ["", ""],
       ["INFORMASI PEMBAYARAN BM", ""],
       ["Nama Bank", t.bank_name || "-"],
       ["Nomor Rekening", t.account_number || "-"],
@@ -230,7 +235,6 @@ const TransactionList = () => {
         1: { cellWidth: 'auto' }
       },
       didParseCell: function(data) {
-        // Style untuk header section di dalam tabel
         if (data.row.raw[0] === "INFORMASI PEMBAYARAN BM") {
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.fillColor = [241, 245, 249];
@@ -239,7 +243,6 @@ const TransactionList = () => {
       }
     });
 
-    // Footer
     const finalY = (doc as any).lastAutoTable.finalY || 150;
     doc.setFontSize(8);
     doc.setTextColor(150);
@@ -247,6 +250,11 @@ const TransactionList = () => {
 
     doc.save(`transaksi-${t.code}.pdf`);
     toast.success("PDF berhasil diunduh");
+  };
+
+  const resetDateFilters = () => {
+    setStartDate("");
+    setEndDate("");
   };
 
   return (
@@ -275,28 +283,62 @@ const TransactionList = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Cari Sekolah, No PO, Kode, Rekanan, atau Bank..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        <div className="space-y-4 mb-6">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Cari Sekolah, No PO, Kode, Rekanan, atau Bank..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+              <Select value={printFilter} onValueChange={setPrintFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter Print" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  <SelectItem value="printed">Sudah Print</SelectItem>
+                  <SelectItem value="not_printed">Belum Print</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-            <Select value={printFilter} onValueChange={setPrintFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Filter Print" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="printed">Sudah Print</SelectItem>
-                <SelectItem value="not_printed">Belum Print</SelectItem>
-              </SelectContent>
-            </Select>
+
+          <div className="flex flex-wrap items-end gap-4 p-4 bg-muted/30 rounded-xl border border-primary/10">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase text-muted-foreground">Dari Tanggal</Label>
+              <Input 
+                type="date" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full md:w-auto bg-white"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase text-muted-foreground">Sampai Tanggal</Label>
+              <Input 
+                type="date" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full md:w-auto bg-white"
+              />
+            </div>
+            {(startDate || endDate) && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={resetDateFilters}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Reset Filter
+              </Button>
+            )}
           </div>
         </div>
 
