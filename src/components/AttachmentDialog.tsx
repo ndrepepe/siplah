@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2, Upload, FileText, X, Eye, Download, Trash2 } from "lucide-react";
+import { Loader2, Upload, FileText, X, Eye, Download, Trash2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import imageCompression from 'browser-image-compression';
 
