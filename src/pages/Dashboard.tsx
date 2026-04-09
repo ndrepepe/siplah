@@ -89,11 +89,16 @@ const Dashboard = () => {
   };
 
   const processData = () => {
-    // 1. Filter transactions for ALL selected months in the selected year
+    // If no months selected, use all 12 months
+    const activeMonths = selectedMonths.length > 0 
+      ? selectedMonths 
+      : Array.from({ length: 12 }, (_, i) => i.toString());
+
+    // 1. Filter transactions for active months in the selected year
     const filteredTransactions = allTransactions.filter(t => {
       const date = parseISO(t.created_at);
       const yearMatch = getYear(date).toString() === selectedYear;
-      const monthMatch = selectedMonths.includes(getMonth(date).toString());
+      const monthMatch = activeMonths.includes(getMonth(date).toString());
       return yearMatch && monthMatch;
     });
 
@@ -114,8 +119,8 @@ const Dashboard = () => {
       avgBM: totalAmount > 0 ? (totalBM / totalAmount) * 100 : 0
     });
 
-    // 2. Process chart data: Show only the selected months (sorted)
-    const sortedMonthIndices = [...selectedMonths].map(Number).sort((a, b) => a - b);
+    // 2. Process chart data: Show the active months (sorted)
+    const sortedMonthIndices = [...activeMonths].map(Number).sort((a, b) => a - b);
     
     const newChartData = sortedMonthIndices.map(monthIdx => {
       const monthDate = setYear(setMonth(new Date(), monthIdx), parseInt(selectedYear));
@@ -165,16 +170,18 @@ const Dashboard = () => {
     );
   }
 
-  const selectedMonthsLabel = selectedMonths.length === 1 
-    ? months[parseInt(selectedMonths[0])]
-    : `${selectedMonths.length} Bulan`;
+  const selectedMonthsLabel = selectedMonths.length === 0
+    ? "Semua Bulan"
+    : selectedMonths.length === 1 
+      ? months[parseInt(selectedMonths[0])]
+      : `${selectedMonths.length} Bulan`;
 
   return (
     <div className="space-y-8">
       {/* Filters Section */}
       <div className="flex flex-col md:flex-row items-end gap-4 bg-white/50 p-4 rounded-2xl border border-primary/10 backdrop-blur-sm">
         <div className="space-y-1.5 flex-1">
-          <label className="text-xs font-bold text-slate-500 uppercase ml-1">Pilih Bulan (Bisa Multi)</label>
+          <label className="text-xs font-bold text-slate-500 uppercase ml-1">Pilih Bulan (Kosongkan untuk Semua)</label>
           <MonthMultiSelect 
             selected={selectedMonths} 
             onChange={setSelectedMonths} 
@@ -215,7 +222,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-slate-900">{stats.count}</div>
-            <p className="text-xs text-slate-500 mt-1">Total data terpilih</p>
+            <p className="text-xs text-slate-500 mt-1">Total data periode ini</p>
           </CardContent>
         </Card>
 
@@ -267,7 +274,7 @@ const Dashboard = () => {
               <Calendar className="w-5 h-5 text-primary" />
               Perbandingan Transaksi
             </CardTitle>
-            <CardDescription>Data untuk bulan-bulan yang dipilih di tahun {selectedYear}</CardDescription>
+            <CardDescription>Data untuk periode yang dipilih di tahun {selectedYear}</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px] pt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -315,7 +322,7 @@ const Dashboard = () => {
               <TrendingUp className="w-5 h-5 text-orange-500" />
               Perbandingan BM
             </CardTitle>
-            <CardDescription>Data untuk bulan-bulan yang dipilih di tahun {selectedYear}</CardDescription>
+            <CardDescription>Data untuk periode yang dipilih di tahun {selectedYear}</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px] pt-4">
             <ResponsiveContainer width="100%" height="100%">
