@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -284,7 +284,7 @@ const TransactionList = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4 mb-6">
-          <div className="flex flex-col md:flex-row items-center gap-4">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
@@ -294,51 +294,53 @@ const TransactionList = () => {
                 className="pl-10"
               />
             </div>
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Select value={printFilter} onValueChange={setPrintFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter Print" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="printed">Sudah Print</SelectItem>
-                  <SelectItem value="not_printed">Belum Print</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Select value={printFilter} onValueChange={setPrintFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Filter Print" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="printed">Sudah Print</SelectItem>
+                    <SelectItem value="not_printed">Belum Print</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="flex flex-wrap items-end gap-4 p-4 bg-muted/30 rounded-xl border border-primary/10">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase text-muted-foreground">Dari Tanggal</Label>
-              <Input 
-                type="date" 
-                value={startDate} 
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full md:w-auto bg-white"
-              />
+              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border border-border">
+                <div className="flex items-center gap-1.5 px-2">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-8 w-[130px] bg-transparent border-none focus-visible:ring-0 p-0 text-xs"
+                  />
+                </div>
+                <span className="text-muted-foreground text-xs">-</span>
+                <div className="flex items-center gap-1.5 px-2">
+                  <Input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-8 w-[130px] bg-transparent border-none focus-visible:ring-0 p-0 text-xs"
+                  />
+                </div>
+                {(startDate || endDate) && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={resetDateFilters}
+                    className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase text-muted-foreground">Sampai Tanggal</Label>
-              <Input 
-                type="date" 
-                value={endDate} 
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full md:w-auto bg-white"
-              />
-            </div>
-            {(startDate || endDate) && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={resetDateFilters}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-              >
-                <X className="w-4 h-4 mr-1" />
-                Reset Filter
-              </Button>
-            )}
           </div>
         </div>
 
