@@ -1,300 +1,345 @@
-"use client";
-
-import React, { useState } from 'react';
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { 
-  PlusCircle, 
-  Save, 
-  RefreshCw, 
-  School, 
-  Hash, 
-  Wallet, 
-  Percent, 
-  Key,
-  Building2,
-  ShoppingBag,
-  UserCircle,
-  CreditCard,
-  SeparatorHorizontal
-} from "lucide-react";
 import { toast } from "sonner";
-import BulkImport from "@/components/BulkImport";
-import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, RefreshCw, Save } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Generator = () => {
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    school_name: '',
-    po_number: '',
-    transaction_amount: '',
-    bm_percentage: '',
-    code: '',
-    cabang: '',
-    nama_siplah: '',
-    produk: '',
-    rekanan_type: '',
-    nama_rekanan: '',
-    bank_name: '',
-    account_number: '',
-    account_owner: ''
-  });
+  const [schoolName, setSchoolName] = useState("");
+  const [poNumber, setPoNumber] = useState("");
+  const [transactionAmount, setTransactionAmount] = useState("");
+  const [bmPercentage, setBmPercentage] = useState("");
+  const [cabang, setCabang] = useState("");
+  const [namaSiplah, setNamaSiplah] = useState("");
+  const [produk, setProduk] = useState("");
+  const [rekananType, setRekananType] = useState("");
+  const [namaRekanan, setNamaRekanan] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountOwner, setAccountOwner] = useState("");
+  const [status, setStatus] = useState("DIAJUKAN");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast: showToast } = useToast();
 
   const generateCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < 16; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setFormData(prev => ({ ...prev, code: result }));
+    setGeneratedCode(result);
     toast.success("Kode baru berhasil dibuat!");
+  };
+
+  const sendWhatsAppNotification = async (data: any) => {
+    try {
+      console.log("Memicu notifikasi WhatsApp...");
+      const { data: response, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: data
+      });
+      
+      if (error) {
+        console.error("Edge Function Error:", error);
+        return;
+      }
+      
+      console.log("Respon WhatsApp:", response);
+    } catch (err) {
+      console.error("Gagal memanggil fungsi WhatsApp:", err);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.school_name || !formData.po_number || !formData.transaction_amount || !formData.code) {
-      toast.error("Mohon isi semua field wajib!");
+
+    if (!schoolName || !poNumber || !transactionAmount || !generatedCode || !cabang || !namaSiplah || !produk || !rekananType) {
+      toast.error("Mohon lengkapi semua field wajib");
       return;
     }
 
-    setLoading(true);
+    if (rekananType === "REKANAN" && !namaRekanan) {
+      toast.error("Mohon isi Nama Rekanan");
+      return;
+    }
+
+    setIsSaving(true);
+    const amount = parseFloat(transactionAmount);
+    
     try {
       const { error } = await supabase
-        .from('transactions')
-        .insert([{
-          ...formData,
-          transaction_amount: parseFloat(formData.transaction_amount),
-          bm_percentage: parseFloat(formData.bm_percentage || '0')
-        }]);
+        .from("transactions")
+        .insert({
+          school_name: schoolName,
+          po_number: poNumber,
+          transaction_amount: amount,
+          bm_percentage: bmPercentage ? parseFloat(bmPercentage) : 0,
+          cabang,
+          nama_siplah: namaSiplah,
+          produk,
+          rekanan_type: rekananType,
+          nama_rekanan: rekananType === "REKANAN" ? namaRekanan : null,
+          bank_name: bankName,
+          account_number: accountNumber,
+          account_owner: accountOwner,
+          status: status,
+          code: generatedCode
+        });
 
       if (error) throw error;
 
-      toast.success("Transaksi berhasil disimpan!");
-      setFormData({
-        school_name: '',
-        po_number: '',
-        transaction_amount: '',
-        bm_percentage: '',
-        code: '',
-        cabang: '',
-        nama_siplah: '',
-        produk: '',
-        rekanan_type: '',
-        nama_rekanan: '',
-        bank_name: '',
-        account_number: '',
-        account_owner: ''
+      // Kirim Notifikasi WhatsApp
+      sendWhatsAppNotification({
+        school_name: schoolName,
+        po_number: poNumber,
+        transaction_amount: amount,
+        code: generatedCode
       });
+
+      showToast({
+        title: "Berhasil!",
+        description: "Data transaksi disimpan. Notifikasi sedang diproses.",
+      });
+
+      // Reset Form
+      setSchoolName("");
+      setPoNumber("");
+      setTransactionAmount("");
+      setBmPercentage("");
+      setCabang("");
+      setNamaSiplah("");
+      setProduk("");
+      setRekananType("");
+      setNamaRekanan("");
+      setBankName("");
+      setAccountNumber("");
+      setAccountOwner("");
+      setStatus("DIAJUKAN");
+      setGeneratedCode("");
     } catch (error: any) {
-      toast.error("Gagal menyimpan: " + error.message);
+      console.error("Error saving data:", error);
+      toast.error("Gagal menyimpan data: " + (error.message || "Terjadi kesalahan"));
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-20">
-      <Card className="bg-white/90 backdrop-blur-md border-primary/10 shadow-xl rounded-3xl overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent border-b border-primary/5">
-          <div className="flex items-center gap-4">
-            <div className="bg-primary/10 p-3 rounded-2xl text-primary">
-              <PlusCircle className="w-6 h-6" />
+    <Card className="w-full max-w-3xl mx-auto shadow-lg border-t-4 border-t-primary">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-center text-primary">
+          Input Data Transaksi
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="schoolName">Nama Sekolah</Label>
+              <Input
+                id="schoolName"
+                value={schoolName}
+                onChange={(e) => setSchoolName(e.target.value)}
+                placeholder="Nama Sekolah"
+              />
             </div>
-            <div>
-              <CardTitle className="text-2xl font-black text-slate-800">Input Transaksi Baru</CardTitle>
-              <CardDescription>Masukkan detail transaksi dan buat kode unik</CardDescription>
+            <div className="space-y-2">
+              <Label htmlFor="cabang">Cabang</Label>
+              <Input
+                id="cabang"
+                value={cabang}
+                onChange={(e) => setCabang(e.target.value)}
+                placeholder="Nama Cabang"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="poNumber">Nomor PO (Maks 21 digit)</Label>
+              <Input
+                id="poNumber"
+                value={poNumber}
+                maxLength={21}
+                onChange={(e) => setPoNumber(e.target.value)}
+                placeholder="Nomor PO"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Nama SIPLAH</Label>
+              <Select onValueChange={setNamaSiplah} value={namaSiplah}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih SIPLAH" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LADANG">LADANG</SelectItem>
+                  <SelectItem value="TELKOM">TELKOM</SelectItem>
+                  <SelectItem value="BLIBLI">BLIBLI</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="transactionAmount">Nominal Transaksi (Maks 12 digit)</Label>
+              <Input
+                id="transactionAmount"
+                type="number"
+                value={transactionAmount}
+                onInput={(e: any) => {
+                  if (e.target.value.length > 12) e.target.value = e.target.value.slice(0, 12);
+                }}
+                onChange={(e) => setTransactionAmount(e.target.value)}
+                placeholder="Jumlah"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bmPercentage">% BM (Opsional)</Label>
+              <Input
+                id="bmPercentage"
+                type="number"
+                step="0.01"
+                value={bmPercentage}
+                onChange={(e) => setBmPercentage(e.target.value)}
+                placeholder="Contoh: 10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Produk</Label>
+              <Select onValueChange={setProduk} value={produk}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Produk" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONBOOK">NONBOOK</SelectItem>
+                  <SelectItem value="BOOK">BOOK</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Rekanan</Label>
+              <Select onValueChange={setRekananType} value={rekananType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Status Rekanan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NON REKANAN">NON REKANAN</SelectItem>
+                  <SelectItem value="REKANAN">REKANAN</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select onValueChange={setStatus} value={status}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
+                  <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {rekananType === "REKANAN" && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label htmlFor="namaRekanan">Nama Rekanan</Label>
+                <Input
+                  id="namaRekanan"
+                  value={namaRekanan}
+                  onChange={(e) => setNamaRekanan(e.target.value)}
+                  placeholder="Masukkan Nama Rekanan"
+                />
+              </div>
+            )}
+
+            {/* Group: BM diberikan melalui */}
+            <div className="md:col-span-2 space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">BM diberikan melalui</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bankName">Nama Bank (Opsional)</Label>
+                  <Input
+                    id="bankName"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="Contoh: BCA, Mandiri"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Nomor Rekening (Opsional)</Label>
+                  <Input
+                    id="accountNumber"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="Nomor Rekening"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="accountOwner">Pemilik Rekening (Opsional)</Label>
+                  <Input
+                    id="accountOwner"
+                    value={accountOwner}
+                    onChange={(e) => setAccountOwner(e.target.value)}
+                    placeholder="Nama Pemilik Rekening"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Section 1: Data Sekolah & PO */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                  <School className="w-4 h-4" /> Data Sekolah & PO
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="school_name" className="font-bold text-slate-700">Nama Sekolah *</Label>
-                  <Input
-                    id="school_name"
-                    name="school_name"
-                    placeholder="Contoh: SDN 01 Jakarta"
-                    value={formData.school_name}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="po_number" className="font-bold text-slate-700">Nomor PO *</Label>
-                  <Input
-                    id="po_number"
-                    name="po_number"
-                    placeholder="Contoh: PO/2024/001"
-                    value={formData.po_number}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cabang" className="font-bold text-slate-700">Cabang</Label>
-                  <Input
-                    id="cabang"
-                    name="cabang"
-                    placeholder="Contoh: Jakarta Pusat"
-                    value={formData.cabang}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-              </div>
 
-              {/* Section 2: Nilai & Kode */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                  <Wallet className="w-4 h-4" /> Nilai & Kode
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="transaction_amount" className="font-bold text-slate-700">Nilai Transaksi (Rp) *</Label>
-                  <Input
-                    id="transaction_amount"
-                    name="transaction_amount"
-                    type="number"
-                    placeholder="0"
-                    value={formData.transaction_amount}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bm_percentage" className="font-bold text-slate-700">Persentase BM (%)</Label>
-                  <Input
-                    id="bm_percentage"
-                    name="bm_percentage"
-                    type="number"
-                    placeholder="0"
-                    value={formData.bm_percentage}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="code" className="font-bold text-slate-700">Kode Unik *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="code"
-                      name="code"
-                      placeholder="Klik Generate"
-                      value={formData.code}
-                      onChange={handleChange}
-                      className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50 font-mono font-bold text-primary"
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={generateCode}
-                      className="rounded-xl border-primary/20 hover:bg-primary/5"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 3: Detail Siplah & Produk */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4" /> Siplah & Produk
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="nama_siplah" className="font-bold text-slate-700">Nama Siplah</Label>
-                  <Input
-                    id="nama_siplah"
-                    name="nama_siplah"
-                    placeholder="Contoh: Siplah Blibli"
-                    value={formData.nama_siplah}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="produk" className="font-bold text-slate-700">Produk</Label>
-                  <Input
-                    id="produk"
-                    name="produk"
-                    placeholder="Contoh: Buku Paket"
-                    value={formData.produk}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-              </div>
-
-              {/* Section 4: Rekanan & Bank */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                  <Building2 className="w-4 h-4" /> Rekanan & Bank
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="nama_rekanan" className="font-bold text-slate-700">Nama Rekanan</Label>
-                  <Input
-                    id="nama_rekanan"
-                    name="nama_rekanan"
-                    placeholder="Contoh: CV Maju Jaya"
-                    value={formData.nama_rekanan}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bank_name" className="font-bold text-slate-700">Nama Bank</Label>
-                  <Input
-                    id="bank_name"
-                    name="bank_name"
-                    placeholder="Contoh: BCA"
-                    value={formData.bank_name}
-                    onChange={handleChange}
-                    className="rounded-xl border-primary/10 focus:border-primary/30 bg-slate-50/50"
-                  />
-                </div>
-              </div>
+          <div className="space-y-2 pt-4 border-t">
+            <Label htmlFor="generatedCode" className="text-lg font-semibold">Kode Transaksi</Label>
+            <div className="flex gap-2">
+              <Input
+                id="generatedCode"
+                value={generatedCode}
+                readOnly
+                placeholder="Generate kode di sini"
+                className="flex-1 font-mono text-lg bg-muted text-center tracking-widest"
+              />
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={generateCode}
+                className="shrink-0"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Generate
+              </Button>
             </div>
+          </div>
 
-            <Button 
-              type="submit" 
-              disabled={loading}
-              className="w-full h-14 rounded-2xl text-lg font-black shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {loading ? (
-                <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-              ) : (
+          <Button 
+            type="submit" 
+            className="w-full text-lg h-12" 
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
                 <Save className="w-5 h-5 mr-2" />
-              )}
-              Simpan Transaksi
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <div className="relative py-4">
-        <div className="absolute inset-0 flex items-center">
-          <Separator className="w-full bg-primary/10" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-transparent px-4 text-sm font-bold text-slate-400 uppercase tracking-widest">Atau</span>
-        </div>
-      </div>
-
-      <BulkImport />
-    </div>
+                Simpan Transaksi
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
