@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar, Paperclip, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import EditTransactionDialog from "@/components/EditTransactionDialog";
+import AttachmentDialog from "@/components/AttachmentDialog";
 import { Label } from "@/components/ui/label";
 
 const TransactionList = () => {
@@ -53,6 +54,10 @@ const TransactionList = () => {
   // State for Delete
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // State for Attachment
+  const [attachmentTransaction, setAttachmentTransaction] = useState<any>(null);
+  const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -459,6 +464,23 @@ const TransactionList = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className={cn(
+                            "h-8 w-8",
+                            t.attachment_url 
+                              ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50" 
+                              : "text-slate-400 hover:text-slate-500 hover:bg-slate-50"
+                          )}
+                          onClick={() => {
+                            setAttachmentTransaction(t);
+                            setIsAttachmentDialogOpen(true);
+                          }}
+                          title="Lampiran Bukti"
+                        >
+                          {t.attachment_url ? <ImageIcon className="w-4 h-4" /> : <Paperclip className="w-4 h-4" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                           onClick={() => downloadPDF(t)}
                           title="Download PDF"
@@ -507,6 +529,13 @@ const TransactionList = () => {
         transaction={editingTransaction}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+        onSuccess={fetchTransactions}
+      />
+
+      <AttachmentDialog
+        transaction={attachmentTransaction}
+        open={isAttachmentDialogOpen}
+        onOpenChange={setIsAttachmentDialogOpen}
         onSuccess={fetchTransactions}
       />
 
