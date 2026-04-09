@@ -14,17 +14,26 @@ const BulkImport = () => {
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [fileName, setFileName] = useState<string>("");
 
+  // Helper to generate 16-char transaction code
+  const generateTransactionCode = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < 16; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
   const templateData = [
     {
       "Nama Sekolah": "SDN 01 Contoh",
       "No PO": "PO/2024/001",
       "Nilai Transaksi": 5000000,
       "Persentase BM": 10,
-      "Kode": "KODE001",
       "Cabang": "Jakarta",
-      "Nama Siplah": "Siplah Blibli",
-      "Produk": "Buku Paket",
-      "Tipe Rekanan": "CV",
+      "Nama Siplah": "LADANG",
+      "Produk": "BOOK",
+      "Tipe Rekanan": "REKANAN",
       "Nama Rekanan": "CV Maju Jaya",
       "Nama Bank": "BCA",
       "No Rekening": "1234567890",
@@ -78,7 +87,7 @@ const BulkImport = () => {
         po_number: row["No PO"] || "",
         transaction_amount: Number(row["Nilai Transaksi"]) || 0,
         bm_percentage: Number(row["Persentase BM"]) || 0,
-        code: row["Kode"] || "",
+        code: generateTransactionCode(), // Auto-generate code here
         cabang: row["Cabang"] || "",
         nama_siplah: row["Nama Siplah"] || "",
         produk: row["Produk"] || "",
@@ -86,13 +95,14 @@ const BulkImport = () => {
         nama_rekanan: row["Nama Rekanan"] || "",
         bank_name: row["Nama Bank"] || "",
         account_number: row["No Rekening"] || "",
-        account_owner: row["Pemilik Rekening"] || ""
+        account_owner: row["Pemilik Rekening"] || "",
+        status: "DIAJUKAN"
       }));
 
-      // Validate required fields
-      const invalidRows = formattedData.filter(r => !r.school_name || !r.po_number || !r.code);
+      // Validate required fields (Code is now auto-generated, so no need to check it from Excel)
+      const invalidRows = formattedData.filter(r => !r.school_name || !r.po_number);
       if (invalidRows.length > 0) {
-        toast.error("Beberapa baris tidak memiliki Nama Sekolah, No PO, atau Kode");
+        toast.error("Beberapa baris tidak memiliki Nama Sekolah atau No PO");
         setLoading(false);
         return;
       }
@@ -103,7 +113,7 @@ const BulkImport = () => {
 
       if (error) throw error;
 
-      toast.success(`${formattedData.length} data berhasil diimpor!`);
+      toast.success(`${formattedData.length} data berhasil diimpor dengan kode otomatis!`);
       setPreviewData([]);
       setFileName("");
     } catch (error: any) {
@@ -123,7 +133,7 @@ const BulkImport = () => {
             </div>
             <div>
               <CardTitle className="text-2xl font-black text-slate-800">Bulk Import Excel</CardTitle>
-              <CardDescription>Unggah banyak data transaksi sekaligus menggunakan file Excel</CardDescription>
+              <CardDescription>Unggah banyak data transaksi sekaligus. Kode akan dibuat otomatis.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -134,7 +144,7 @@ const BulkImport = () => {
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">1</span>
                 Unduh Template
               </h3>
-              <p className="text-sm text-slate-500">Gunakan format Excel yang sudah kami sediakan agar data terbaca dengan benar oleh sistem.</p>
+              <p className="text-sm text-slate-500">Gunakan format Excel terbaru. Kolom "Kode" sudah tidak diperlukan lagi.</p>
               <Button 
                 onClick={downloadTemplate} 
                 variant="outline" 
@@ -173,7 +183,7 @@ const BulkImport = () => {
               <CheckCircle2 className="h-5 w-5 text-blue-600" />
               <AlertTitle className="text-blue-800 font-bold">Data Siap Diimpor</AlertTitle>
               <AlertDescription className="text-blue-700">
-                Terdeteksi <strong>{previewData.length} baris</strong> data. Pastikan kolom sudah sesuai dengan template sebelum melanjutkan.
+                Terdeteksi <strong>{previewData.length} baris</strong> data. Sistem akan membuat kode transaksi unik untuk setiap baris secara otomatis.
               </AlertDescription>
             </Alert>
           )}
@@ -203,9 +213,9 @@ const BulkImport = () => {
             <div className="text-xs text-amber-800 space-y-1">
               <p className="font-bold">Penting:</p>
               <ul className="list-disc ml-4 space-y-1">
-                <li>Kolom <strong>Nama Sekolah</strong>, <strong>No PO</strong>, dan <strong>Kode</strong> wajib diisi.</li>
-                <li>Pastikan format angka pada <strong>Nilai Transaksi</strong> dan <strong>Persentase BM</strong> tidak mengandung karakter non-numerik.</li>
-                <li>Sistem akan mengabaikan baris yang tidak memiliki data wajib.</li>
+                <li>Kolom <strong>Nama Sekolah</strong> dan <strong>No PO</strong> wajib diisi.</li>
+                <li><strong>Kode Transaksi</strong> akan dibuat otomatis oleh sistem (16 digit).</li>
+                <li>Pastikan format angka pada <strong>Nilai Transaksi</strong> dan <strong>Persentase BM</strong> benar.</li>
               </ul>
             </div>
           </div>
