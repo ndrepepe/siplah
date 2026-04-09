@@ -99,7 +99,7 @@ const BulkImport = () => {
         status: "DIAJUKAN"
       }));
 
-      // Validate required fields (Code is now auto-generated, so no need to check it from Excel)
+      // Validate required fields
       const invalidRows = formattedData.filter(r => !r.school_name || !r.po_number);
       if (invalidRows.length > 0) {
         toast.error("Beberapa baris tidak memiliki Nama Sekolah atau No PO");
@@ -132,7 +132,7 @@ const BulkImport = () => {
               <FileSpreadsheet className="w-6 h-6" />
             </div>
             <div>
-              <CardTitle className="text-2xl font-black text-slate-800">Bulk Import Excel</CardTitle>
+              <CardTitle className="text-2xl font-black text-slate-800">Input Masal Excel</CardTitle>
               <CardDescription>Unggah banyak data transaksi sekaligus. Kode akan dibuat otomatis.</CardDescription>
             </div>
           </div>

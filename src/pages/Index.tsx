@@ -79,7 +79,7 @@ const Index = () => {
                 className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-sm md:text-base font-bold transition-all"
               >
                 <FileSpreadsheet className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">Bulk</span>
+                <span className="hidden sm:inline">Input Masal</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="list" 
