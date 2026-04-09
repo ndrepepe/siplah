@@ -144,7 +144,7 @@ const BulkImport = () => {
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">1</span>
                 Unduh Template
               </h3>
-              <p className="text-sm text-slate-500">Gunakan format Excel terbaru. Kolom "Kode" sudah tidak diperlukan lagi.</p>
+              <p className="text-sm text-slate-500">Format Excel untuk iput masal. Kode Transaksi akan secara otomatis dibuat oleh sistem.</p>
               <Button 
                 onClick={downloadTemplate} 
                 variant="outline" 
