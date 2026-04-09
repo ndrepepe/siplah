@@ -1,8 +1,11 @@
+"use client";
+
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import Generator from "./Generator";
 import TransactionList from "./TransactionList";
+import Dashboard from "./Dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, PlusCircle, LogOut, User, Anchor } from "lucide-react";
+import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,9 +56,16 @@ const Index = () => {
           </div>
         </header>
 
-        <Tabs defaultValue="input" className="w-full">
+        <Tabs defaultValue="dashboard" className="w-full">
           <div className="flex justify-center mb-8">
-            <TabsList className="grid w-full max-w-md grid-cols-2 h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10">
+            <TabsList className="grid w-full max-w-xl grid-cols-3 h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10">
+              <TabsTrigger 
+                value="dashboard" 
+                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-base font-bold transition-all"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                Dashboard
+              </TabsTrigger>
               <TabsTrigger 
                 value="input" 
                 className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-base font-bold transition-all"
@@ -72,6 +82,10 @@ const Index = () => {
               </TabsTrigger>
             </TabsList>
           </div>
+
+          <TabsContent value="dashboard" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <Dashboard />
+          </TabsContent>
 
           <TabsContent value="input" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <Generator />
