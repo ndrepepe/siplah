@@ -25,6 +25,16 @@ const BulkImport = () => {
     return result;
   };
 
+  const sendWhatsAppNotification = async (data: any) => {
+    try {
+      await supabase.functions.invoke('send-whatsapp', {
+        body: data
+      });
+    } catch (err) {
+      console.error("[BulkImport] Gagal memanggil fungsi WhatsApp:", err);
+    }
+  };
+
   const downloadTemplate = async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Template Transaksi');
@@ -76,7 +86,6 @@ const BulkImport = () => {
     const rekananOptions = ['NON REKANAN', 'REKANAN'];
 
     for (let i = 2; i <= 1000; i++) {
-      // Nama Siplah (Column F)
       worksheet.getCell(`F${i}`).dataValidation = {
         type: 'list',
         allowBlank: true,
@@ -86,7 +95,6 @@ const BulkImport = () => {
         error: 'Silakan pilih dari daftar yang tersedia'
       };
 
-      // Produk (Column G)
       worksheet.getCell(`G${i}`).dataValidation = {
         type: 'list',
         allowBlank: true,
@@ -96,7 +104,6 @@ const BulkImport = () => {
         error: 'Silakan pilih dari daftar yang tersedia'
       };
 
-      // Tipe Rekanan (Column H)
       worksheet.getCell(`H${i}`).dataValidation = {
         type: 'list',
         allowBlank: true,
@@ -107,7 +114,6 @@ const BulkImport = () => {
       };
     }
 
-    // Generate and Download
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = window.URL.createObjectURL(blob);
@@ -183,7 +189,21 @@ const BulkImport = () => {
 
       if (error) throw error;
 
-      toast.success(`${formattedData.length} data berhasil diimpor dengan kode otomatis!`);
+      toast.success(`${formattedData.length} data berhasil diimpor! Mengirim notifikasi WhatsApp...`);
+      
+      // Trigger notifications sequentially with a small delay
+      for (const item of formattedData) {
+        await sendWhatsAppNotification({
+          school_name: item.school_name,
+          po_number: item.po_number,
+          transaction_amount: item.transaction_amount,
+          code: item.code
+        });
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      toast.success("Semua notifikasi WhatsApp telah dikirim.");
       setPreviewData([]);
       setFileName("");
     } catch (error: any) {
@@ -203,7 +223,7 @@ const BulkImport = () => {
             </div>
             <div>
               <CardTitle className="text-2xl font-black text-slate-800">Input Masal Excel</CardTitle>
-              <CardDescription>Unggah banyak data transaksi sekaligus. Kode akan dibuat otomatis.</CardDescription>
+              <CardDescription>Unggah banyak data transaksi sekaligus. Kode dan notifikasi WA akan dibuat otomatis.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -253,7 +273,7 @@ const BulkImport = () => {
               <CheckCircle2 className="h-5 w-5 text-blue-600" />
               <AlertTitle className="text-blue-800 font-bold">Data Siap Diimpor</AlertTitle>
               <AlertDescription className="text-blue-700">
-                Terdeteksi <strong>{previewData.length} baris</strong> data. Sistem akan membuat kode transaksi unik untuk setiap baris secara otomatis.
+                Terdeteksi <strong>{previewData.length} baris</strong> data. Sistem akan membuat kode transaksi unik dan mengirim notifikasi WA untuk setiap baris.
               </AlertDescription>
             </Alert>
           )}
@@ -267,12 +287,12 @@ const BulkImport = () => {
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Sedang Memproses...
+                  Sedang Memproses & Mengirim WA...
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Impor Sekarang
+                  Impor & Kirim Notifikasi
                 </>
               )}
             </Button>
@@ -284,8 +304,8 @@ const BulkImport = () => {
               <p className="font-bold">Penting:</p>
               <ul className="list-disc ml-4 space-y-1">
                 <li>Kolom <strong>Nama Sekolah</strong> dan <strong>No PO</strong> wajib diisi.</li>
-                <li><strong>Kode Transaksi</strong> akan dibuat otomatis oleh sistem (16 digit).</li>
-                <li>Pastikan format angka pada <strong>Nilai Transaksi</strong> dan <strong>Persentase BM</strong> benar.</li>
+                <li><strong>Kode Transaksi</strong> dan <strong>Notifikasi WA</strong> akan diproses otomatis.</li>
+                <li>Pastikan koneksi internet stabil saat proses impor berlangsung.</li>
               </ul>
             </div>
           </div>
