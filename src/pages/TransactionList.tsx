@@ -315,23 +315,23 @@ const TransactionList = () => {
                 </Select>
               </div>
 
-              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border border-border">
-                <div className="flex items-center gap-1.5 px-2">
-                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="flex items-center gap-1 sm:gap-2 bg-muted/50 p-1 rounded-lg border border-border w-full sm:w-auto overflow-hidden">
+                <div className="flex items-center gap-1 sm:gap-1.5 px-1 sm:px-2 flex-1 min-w-0">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                   <Input 
                     type="date" 
                     value={startDate} 
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="h-8 w-[130px] bg-transparent border-none focus-visible:ring-0 p-0 text-xs"
+                    className="h-8 w-full bg-transparent border-none focus-visible:ring-0 p-0 text-[10px] sm:text-xs min-w-[80px]"
                   />
                 </div>
-                <span className="text-muted-foreground text-xs">-</span>
-                <div className="flex items-center gap-1.5 px-2">
+                <span className="text-muted-foreground text-[10px] sm:text-xs shrink-0">-</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 px-1 sm:px-2 flex-1 min-w-0">
                   <Input 
                     type="date" 
                     value={endDate} 
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="h-8 w-[130px] bg-transparent border-none focus-visible:ring-0 p-0 text-xs"
+                    className="h-8 w-full bg-transparent border-none focus-visible:ring-0 p-0 text-[10px] sm:text-xs min-w-[80px]"
                   />
                 </div>
                 {(startDate || endDate) && (
@@ -339,7 +339,7 @@ const TransactionList = () => {
                     variant="ghost" 
                     size="icon" 
                     onClick={resetDateFilters}
-                    className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0"
                   >
                     <X className="w-3.5 h-3.5" />
                   </Button>
