@@ -73,8 +73,46 @@ const BulkImport = () => {
       { header: 'Pemilik Rekening', key: 'acc_owner', width: 25 },
     ];
 
+    // Style Header
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF640D5F' } };
+
+    // Add Data Validation (Dropdowns) for 1000 rows
+    const siplahOptions = ['LADANG', 'TELKOM', 'BLIBLI'];
+    const produkOptions = ['NONBOOK', 'BOOK'];
+    const rekananOptions = ['NON REKANAN', 'REKANAN'];
+
+    for (let i = 2; i <= 1000; i++) {
+      // Column F: Nama Siplah
+      worksheet.getCell(`F${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${siplahOptions.join(',')}"`],
+        showErrorMessage: true,
+        errorTitle: 'Input Tidak Valid',
+        error: 'Silakan pilih dari daftar yang tersedia'
+      };
+
+      // Column G: Produk
+      worksheet.getCell(`G${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${produkOptions.join(',')}"`],
+        showErrorMessage: true,
+        errorTitle: 'Input Tidak Valid',
+        error: 'Silakan pilih dari daftar yang tersedia'
+      };
+
+      // Column H: Tipe Rekanan
+      worksheet.getCell(`H${i}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${rekananOptions.join(',')}"`],
+        showErrorMessage: true,
+        errorTitle: 'Input Tidak Valid',
+        error: 'Silakan pilih dari daftar yang tersedia'
+      };
+    }
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -84,7 +122,7 @@ const BulkImport = () => {
     anchor.download = 'Template_Import_Transaksi.xlsx';
     anchor.click();
     window.URL.revokeObjectURL(url);
-    toast.success("Template berhasil diunduh");
+    toast.success("Template dengan pilihan dropdown berhasil diunduh");
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,7 +170,6 @@ const BulkImport = () => {
 
       toast.success(`${formattedData.length} data berhasil diimpor! Mengirim ringkasan WhatsApp...`);
       
-      // Kirim satu pesan ringkasan untuk semua data
       await sendSummaryNotification(formattedData);
 
       toast.success("Ringkasan WhatsApp telah dikirim.");
@@ -166,6 +203,7 @@ const BulkImport = () => {
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">1</span>
                 Unduh Template
               </h3>
+              <p className="text-sm text-slate-500">Template kini dilengkapi dengan pilihan dropdown untuk Nama Siplah, Produk, dan Tipe Rekanan.</p>
               <Button onClick={downloadTemplate} variant="outline" className="w-full rounded-xl border-primary/20 hover:bg-primary/5 text-primary font-bold">
                 <Download className="w-4 h-4 mr-2" /> Download Template
               </Button>
