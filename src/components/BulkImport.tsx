@@ -15,7 +15,6 @@ const BulkImport = () => {
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [fileName, setFileName] = useState<string>("");
 
-  // Helper to generate 16-char transaction code
   const generateTransactionCode = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let result = "";
@@ -25,13 +24,33 @@ const BulkImport = () => {
     return result;
   };
 
-  const sendWhatsAppNotification = async (data: any) => {
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(value);
+  };
+
+  const sendSummaryNotification = async (items: any[]) => {
     try {
+      let message = `🚀 *IMPORT MASAL BERHASIL!*\n`;
+      message += `📅 Tanggal: ${new Date().toLocaleDateString('id-ID')}\n`;
+      message += `📊 Total: ${items.length} Transaksi\n\n`;
+
+      items.forEach((item, index) => {
+        message += `${index + 1}. *${item.school_name}*\n`;
+        message += `   PO: ${item.po_number} | ${formatCurrency(item.transaction_amount)}\n`;
+        message += `   Kode: \`${item.code}\`\n\n`;
+      });
+
+      message += `_Pesan otomatis dari Grand Line Manager_`;
+
       await supabase.functions.invoke('send-whatsapp', {
-        body: data
+        body: { message }
       });
     } catch (err) {
-      console.error("[BulkImport] Gagal memanggil fungsi WhatsApp:", err);
+      console.error("[BulkImport] Gagal mengirim ringkasan WhatsApp:", err);
     }
   };
 
@@ -39,7 +58,6 @@ const BulkImport = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Template Transaksi');
 
-    // Define Columns
     worksheet.columns = [
       { header: 'Nama Sekolah', key: 'school_name', width: 30 },
       { header: 'No PO', key: 'po_number', width: 20 },
@@ -55,64 +73,8 @@ const BulkImport = () => {
       { header: 'Pemilik Rekening', key: 'acc_owner', width: 25 },
     ];
 
-    // Add Sample Data
-    worksheet.addRow({
-      school_name: 'SDN 01 Contoh',
-      po_number: 'PO/2024/001',
-      amount: 5000000,
-      bm: 10,
-      cabang: 'Jakarta',
-      siplah: 'LADANG',
-      produk: 'BOOK',
-      rekanan_type: 'REKANAN',
-      rekanan_name: 'CV Maju Jaya',
-      bank: 'BCA',
-      acc_no: '1234567890',
-      acc_owner: 'Budi Sudarsono'
-    });
-
-    // Style Header
-    worksheet.getRow(1).font = { bold: true };
-    worksheet.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF640D5F' }
-    };
-    worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
-
-    // Add Data Validation (Dropdowns) for 1000 rows
-    const siplahOptions = ['LADANG', 'TELKOM', 'BLIBLI'];
-    const produkOptions = ['NONBOOK', 'BOOK'];
-    const rekananOptions = ['NON REKANAN', 'REKANAN'];
-
-    for (let i = 2; i <= 1000; i++) {
-      worksheet.getCell(`F${i}`).dataValidation = {
-        type: 'list',
-        allowBlank: true,
-        formulae: [`"${siplahOptions.join(',')}"`],
-        showErrorMessage: true,
-        errorTitle: 'Input Tidak Valid',
-        error: 'Silakan pilih dari daftar yang tersedia'
-      };
-
-      worksheet.getCell(`G${i}`).dataValidation = {
-        type: 'list',
-        allowBlank: true,
-        formulae: [`"${produkOptions.join(',')}"`],
-        showErrorMessage: true,
-        errorTitle: 'Input Tidak Valid',
-        error: 'Silakan pilih dari daftar yang tersedia'
-      };
-
-      worksheet.getCell(`H${i}`).dataValidation = {
-        type: 'list',
-        allowBlank: true,
-        formulae: [`"${rekananOptions.join(',')}"`],
-        showErrorMessage: true,
-        errorTitle: 'Input Tidak Valid',
-        error: 'Silakan pilih dari daftar yang tersedia'
-      };
-    }
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF640D5F' } };
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -122,41 +84,30 @@ const BulkImport = () => {
     anchor.download = 'Template_Import_Transaksi.xlsx';
     anchor.click();
     window.URL.revokeObjectURL(url);
-    
-    toast.success("Template dengan pilihan dropdown berhasil diunduh");
+    toast.success("Template berhasil diunduh");
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
         const bstr = evt.target?.result;
         const wb = XLSX.read(bstr, { type: 'binary' });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
+        const ws = wb.Sheets[wb.SheetNames[0]];
         const data = XLSX.utils.sheet_to_json(ws);
-        
-        if (data.length === 0) {
-          toast.error("File Excel kosong");
-          return;
-        }
-        
+        if (data.length === 0) { toast.error("File Excel kosong"); return; }
         setPreviewData(data);
         toast.info(`${data.length} baris data terdeteksi`);
-      } catch (error) {
-        toast.error("Gagal membaca file Excel");
-      }
+      } catch (error) { toast.error("Gagal membaca file Excel"); }
     };
     reader.readAsBinaryString(file);
   };
 
   const importData = async () => {
     if (previewData.length === 0) return;
-    
     setLoading(true);
     try {
       const formattedData = previewData.map(row => ({
@@ -176,34 +127,15 @@ const BulkImport = () => {
         status: "DIAJUKAN"
       }));
 
-      const invalidRows = formattedData.filter(r => !r.school_name || !r.po_number);
-      if (invalidRows.length > 0) {
-        toast.error("Beberapa baris tidak memiliki Nama Sekolah atau No PO");
-        setLoading(false);
-        return;
-      }
-
-      const { error } = await supabase
-        .from('transactions')
-        .insert(formattedData);
-
+      const { error } = await supabase.from('transactions').insert(formattedData);
       if (error) throw error;
 
-      toast.success(`${formattedData.length} data berhasil diimpor! Mengirim notifikasi WhatsApp...`);
+      toast.success(`${formattedData.length} data berhasil diimpor! Mengirim ringkasan WhatsApp...`);
       
-      // Trigger notifications sequentially with a small delay
-      for (const item of formattedData) {
-        await sendWhatsAppNotification({
-          school_name: item.school_name,
-          po_number: item.po_number,
-          transaction_amount: item.transaction_amount,
-          code: item.code
-        });
-        // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      // Kirim satu pesan ringkasan untuk semua data
+      await sendSummaryNotification(formattedData);
 
-      toast.success("Semua notifikasi WhatsApp telah dikirim.");
+      toast.success("Ringkasan WhatsApp telah dikirim.");
       setPreviewData([]);
       setFileName("");
     } catch (error: any) {
@@ -223,7 +155,7 @@ const BulkImport = () => {
             </div>
             <div>
               <CardTitle className="text-2xl font-black text-slate-800">Input Masal Excel</CardTitle>
-              <CardDescription>Unggah banyak data transaksi sekaligus. Kode dan notifikasi WA akan dibuat otomatis.</CardDescription>
+              <CardDescription>Unggah banyak data sekaligus. Sistem akan mengirimkan SATU pesan ringkasan ke WhatsApp.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -234,35 +166,20 @@ const BulkImport = () => {
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">1</span>
                 Unduh Template
               </h3>
-              <p className="text-sm text-slate-500">Format Excel untuk iput masal. Kolom Nama Siplah, Produk, dan Rekanan kini memiliki pilihan dropdown.</p>
-              <Button 
-                onClick={downloadTemplate} 
-                variant="outline" 
-                className="w-full rounded-xl border-primary/20 hover:bg-primary/5 text-primary font-bold"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Template Excel
+              <Button onClick={downloadTemplate} variant="outline" className="w-full rounded-xl border-primary/20 hover:bg-primary/5 text-primary font-bold">
+                <Download className="w-4 h-4 mr-2" /> Download Template
               </Button>
             </div>
-
             <div className="space-y-4">
               <h3 className="font-bold text-slate-700 flex items-center gap-2">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs">2</span>
                 Unggah File
               </h3>
-              <p className="text-sm text-slate-500">Pilih file Excel yang sudah diisi data transaksi Anda.</p>
               <div className="relative">
-                <input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  onChange={handleFileUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
+                <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                 <div className={`border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center transition-colors ${fileName ? 'border-green-400 bg-green-50' : 'border-slate-200 hover:border-primary/40'}`}>
                   <Upload className={`w-8 h-8 mb-2 ${fileName ? 'text-green-500' : 'text-slate-400'}`} />
-                  <span className="text-sm font-medium text-slate-600">
-                    {fileName || "Klik atau seret file ke sini"}
-                  </span>
+                  <span className="text-sm font-medium text-slate-600">{fileName || "Klik atau seret file ke sini"}</span>
                 </div>
               </div>
             </div>
@@ -272,43 +189,13 @@ const BulkImport = () => {
             <Alert className="bg-blue-50 border-blue-200 rounded-2xl">
               <CheckCircle2 className="h-5 w-5 text-blue-600" />
               <AlertTitle className="text-blue-800 font-bold">Data Siap Diimpor</AlertTitle>
-              <AlertDescription className="text-blue-700">
-                Terdeteksi <strong>{previewData.length} baris</strong> data. Sistem akan membuat kode transaksi unik dan mengirim notifikasi WA untuk setiap baris.
-              </AlertDescription>
+              <AlertDescription className="text-blue-700">Terdeteksi <strong>{previewData.length} baris</strong> data.</AlertDescription>
             </Alert>
           )}
 
-          <div className="pt-4">
-            <Button 
-              onClick={importData} 
-              disabled={loading || previewData.length === 0}
-              className="w-full h-14 rounded-2xl text-lg font-black shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Sedang Memproses & Mengirim WA...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Impor & Kirim Notifikasi
-                </>
-              )}
-            </Button>
-          </div>
-
-          <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-amber-800 space-y-1">
-              <p className="font-bold">Penting:</p>
-              <ul className="list-disc ml-4 space-y-1">
-                <li>Kolom <strong>Nama Sekolah</strong> dan <strong>No PO</strong> wajib diisi.</li>
-                <li><strong>Kode Transaksi</strong> dan <strong>Notifikasi WA</strong> akan diproses otomatis.</li>
-                <li>Pastikan koneksi internet stabil saat proses impor berlangsung.</li>
-              </ul>
-            </div>
-          </div>
+          <Button onClick={importData} disabled={loading || previewData.length === 0} className="w-full h-14 rounded-2xl text-lg font-black shadow-lg shadow-primary/20">
+            {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Memproses...</> : <><CheckCircle2 className="w-5 h-5 mr-2" /> Impor & Kirim Ringkasan WA</>}
+          </Button>
         </CardContent>
       </Card>
     </div>

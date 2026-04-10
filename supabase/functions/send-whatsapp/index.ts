@@ -15,7 +15,8 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { school_name, po_number, transaction_amount, code } = await req.json()
+    const body = await req.json()
+    const { school_name, po_number, transaction_amount, code, message: customMessage } = body
 
     // Ambil dan bersihkan Token & Nomor dari Secrets
     const FONNTE_TOKEN = Deno.env.get('WHATSAPP_API_KEY')?.trim()
@@ -29,7 +30,7 @@ serve(async (req: Request) => {
       })
     }
 
-    // Normalisasi Nomor Telepon (Khusus untuk 081804272204 -> 6281804272204)
+    // Normalisasi Nomor Telepon
     TARGET_NUMBER = TARGET_NUMBER.replace(/[^0-9]/g, '');
     if (TARGET_NUMBER.startsWith('0')) {
       TARGET_NUMBER = '62' + TARGET_NUMBER.slice(1);
@@ -37,25 +38,30 @@ serve(async (req: Request) => {
       TARGET_NUMBER = '62' + TARGET_NUMBER;
     }
 
-    const formattedAmount = new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(transaction_amount);
+    let finalMessage = "";
 
-    const message = `🚀 *TRANSAKSI BARU!*\n\n` +
-                    `🏫 *Sekolah:* ${school_name}\n` +
-                    `📄 *No PO:* ${po_number}\n` +
-                    `💰 *Nominal:* ${formattedAmount}\n` +
-                    `🔑 *Kode:* ${code}\n\n` +
-                    `_Pesan otomatis dari Grand Line Manager_`;
+    if (customMessage) {
+      finalMessage = customMessage;
+    } else {
+      const formattedAmount = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      }).format(transaction_amount);
 
-    console.log(`[send-whatsapp] Mencoba mengirim ke: ${TARGET_NUMBER} menggunakan token: ${FONNTE_TOKEN.substring(0, 5)}...`);
+      finalMessage = `🚀 *TRANSAKSI BARU!*\n\n` +
+                      `🏫 *Sekolah:* ${school_name}\n` +
+                      `📄 *No PO:* ${po_number}\n` +
+                      `💰 *Nominal:* ${formattedAmount}\n` +
+                      `🔑 *Kode:* ${code}\n\n` +
+                      `_Pesan otomatis dari Grand Line Manager_`;
+    }
 
-    // Menggunakan URLSearchParams untuk application/x-www-form-urlencoded
+    console.log(`[send-whatsapp] Mengirim pesan ke: ${TARGET_NUMBER}`);
+
     const params = new URLSearchParams();
     params.append('target', TARGET_NUMBER);
-    params.append('message', message);
+    params.append('message', finalMessage);
     params.append('delay', '2');
 
     const response = await fetch('https://api.fonnte.com/send', {
@@ -67,11 +73,9 @@ serve(async (req: Request) => {
     });
 
     const result = await response.json();
-    console.log("[send-whatsapp] Respon Lengkap Fonnte:", JSON.stringify(result));
-
+    
     if (result.status === false) {
-      // Jika Fonnte memberikan alasan spesifik (misal: device disconnected)
-      throw new Error(result.reason || "Gagal mengirim pesan (Cek status device di Fonnte)");
+      throw new Error(result.reason || "Gagal mengirim pesan");
     }
 
     return new Response(JSON.stringify({ success: true, fonnte_response: result }), {
@@ -80,7 +84,7 @@ serve(async (req: Request) => {
     });
 
   } catch (error: any) {
-    console.error("[send-whatsapp] CRITICAL ERROR:", error.message);
+    console.error("[send-whatsapp] Error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
