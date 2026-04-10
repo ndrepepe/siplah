@@ -6,7 +6,7 @@ import ExcelJS from 'exceljs';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -30,6 +30,12 @@ const BulkImport = () => {
       currency: 'IDR',
       minimumFractionDigits: 0
     }).format(value);
+  };
+
+  const clearPreview = () => {
+    setPreviewData([]);
+    setFileName("");
+    toast.info("Pratinjau data dihapus");
   };
 
   const sendSummaryNotification = async (items: any[]) => {
@@ -126,6 +132,8 @@ const BulkImport = () => {
       } catch (error) { toast.error("Gagal membaca file Excel"); }
     };
     reader.readAsBinaryString(file);
+    // Reset input value so the same file can be uploaded again if cleared
+    e.target.value = '';
   };
 
   const importData = async () => {
@@ -134,7 +142,7 @@ const BulkImport = () => {
     
     const errors: string[] = [];
     const formattedData = previewData.map((row, index) => {
-      const rowNum = index + 2; // Excel row starts at 2 (1 is header)
+      const rowNum = index + 2;
       
       const school_name = row["Nama Sekolah"];
       const po_number = row["No PO"];
@@ -145,7 +153,6 @@ const BulkImport = () => {
       const rekanan_type = row["Tipe Rekanan"];
       const rekanan_name = row["Nama Rekanan"];
 
-      // Validation Logic
       if (!school_name) errors.push(`Baris ${rowNum}: Nama Sekolah wajib diisi`);
       if (!po_number) errors.push(`Baris ${rowNum}: No PO wajib diisi`);
       if (!amount || isNaN(Number(amount))) errors.push(`Baris ${rowNum}: Nilai Transaksi wajib diisi angka`);
@@ -251,8 +258,15 @@ const BulkImport = () => {
           </div>
 
           {previewData.length > 0 && (
-            <Alert className="bg-blue-50 border-blue-200 rounded-2xl">
+            <Alert className="bg-blue-50 border-blue-200 rounded-2xl relative">
               <CheckCircle2 className="h-5 w-5 text-blue-600" />
+              <button 
+                onClick={clearPreview}
+                className="absolute top-4 right-4 text-blue-400 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-100"
+                title="Hapus pratinjau"
+              >
+                <X className="w-5 h-5" />
+              </button>
               <AlertTitle className="text-blue-800 font-bold">Data Terdeteksi</AlertTitle>
               <AlertDescription className="text-blue-700">
                 Terdapat <strong>{previewData.length} baris</strong> data yang akan divalidasi.
