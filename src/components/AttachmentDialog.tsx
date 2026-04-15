@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Upload, X, Image as ImageIcon, FileText, Download, CheckCircle2, Plus, AlertCircle } from "lucide-react";
 import imageCompression from 'browser-image-compression';
+import { PDFDocument } from 'pdf-lib';
 
 interface AttachmentDialogProps {
   transaction: any;
@@ -38,31 +39,67 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
     }
   }, [open, transaction]);
 
+  const compressPDF = async (pdfFile: File): Promise<File> => {
+    try {
+      const arrayBuffer = await pdfFile.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      
+      // Re-saving the PDF can sometimes reduce size by removing unused objects
+      const pdfBytes = await pdfDoc.save({ 
+        useObjectStreams: true,
+        addDefaultPage: false
+      });
+      
+      return new File([pdfBytes], pdfFile.name, { type: 'application/pdf' });
+    } catch (error) {
+      console.error("PDF optimization error:", error);
+      throw error;
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // PDF Limit: 1MB (1024 KB)
+    const pdfLimit = 1024 * 1024; // 1MB
+    const imageLimit = 100 * 1024; // 100KB
+
+    // PDF Handling
     if (selectedFile.type === 'application/pdf') {
-      const pdfLimit = 1024 * 1024;
       if (selectedFile.size > pdfLimit) {
-        toast.error("File PDF terlalu besar. Maksimal 1MB.");
-        e.target.value = '';
-        return;
+        const loadingToast = toast.loading("PDF melebihi 1MB. Mencoba optimasi otomatis...");
+        try {
+          const optimizedPdf = await compressPDF(selectedFile);
+          toast.dismiss(loadingToast);
+          
+          if (optimizedPdf.size > pdfLimit) {
+            const sizeInMb = (optimizedPdf.size / (1024 * 1024)).toFixed(2);
+            toast.error(`Gagal mengompres PDF di bawah 1MB (Ukuran akhir: ${sizeInMb}MB). Silakan gunakan file yang lebih kecil.`);
+            e.target.value = '';
+            return;
+          }
+          
+          setFile(optimizedPdf);
+          setPreviewUrl(null);
+          toast.success(`PDF berhasil dioptimasi: ${(selectedFile.size / 1024).toFixed(0)}KB → ${(optimizedPdf.size / 1024).toFixed(0)}KB`);
+        } catch (error) {
+          toast.dismiss(loadingToast);
+          toast.error("Gagal memproses file PDF");
+          e.target.value = '';
+        }
+      } else {
+        setFile(selectedFile);
+        setPreviewUrl(null);
+        toast.success("PDF siap diunggah");
       }
-      setFile(selectedFile);
-      setPreviewUrl(null);
-      toast.success("PDF siap diunggah (Ukuran aman)");
       return;
     }
 
-    // Image Limit: 100KB (0.1MB)
+    // Image Handling
     if (selectedFile.type.startsWith('image/')) {
-      const imageLimit = 100 * 1024;
-      
       if (selectedFile.size > imageLimit) {
         const options = {
-          maxSizeMB: 0.09, // Sedikit di bawah 100KB untuk margin aman
+          maxSizeMB: 0.09,
           maxWidthOrHeight: 1920,
           useWebWorker: true,
           initialQuality: 0.7
@@ -81,7 +118,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
           toast.success(`Berhasil dikompres: ${originalSize}KB → ${compressedSize}KB`);
         } catch (error) {
           console.error("Compression error:", error);
-          toast.error("Gagal mengompres gambar secara otomatis");
+          toast.error("Gagal mengompres gambar");
           e.target.value = '';
         }
       } else {
@@ -180,7 +217,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
               <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Ketentuan File:</p>
               <ul className="text-[10px] text-blue-700 list-disc list-inside space-y-0.5">
                 <li>Gambar: Maks 100KB (Otomatis kompres)</li>
-                <li>PDF: Maks 1MB</li>
+                <li>PDF: Maks 1MB (Otomatis optimasi)</li>
               </ul>
             </div>
           </div>
