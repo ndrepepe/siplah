@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Image as ImageIcon, FileText, Download, CheckCircle2 } from "lucide-react";
+import { Loader2, Upload, X, Image as ImageIcon, FileText, Download, CheckCircle2, Plus } from "lucide-react";
 import imageCompression from 'browser-image-compression';
 
 interface AttachmentDialogProps {
@@ -224,7 +224,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-bold text-slate-700">Belum ada lampiran</p>
-                  <p className="text-[10px] text-muted-foreground">Klik area ini untuk mengunggah</p>
+                  <p className="text-[10px] text-muted-foreground">Klik area ini atau tombol di bawah</p>
                 </div>
               </div>
             )}
@@ -235,16 +235,29 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
             <div className="space-y-3">
               <Label className="text-sm font-bold text-slate-700">Unggah File Baru</Label>
               <div 
-                className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/40 transition-all cursor-pointer"
+                className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/40 transition-all cursor-pointer"
                 onClick={handleTriggerFile}
               >
-                <Upload className="w-6 h-6 text-slate-400" />
-                <div className="text-center">
-                  <span className="text-sm font-medium text-primary">Klik untuk pilih file</span>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Gambar (Maks 100KB) | PDF (Maks 1MB)
-                  </p>
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="w-6 h-6 text-slate-400" />
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground">
+                      Gambar (Maks 100KB) | PDF (Maks 1MB)
+                    </p>
+                  </div>
                 </div>
+                
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  className="rounded-xl border-primary/30 text-primary hover:bg-primary/5 font-bold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTriggerFile();
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Pilih File
+                </Button>
               </div>
 
               {file && (
