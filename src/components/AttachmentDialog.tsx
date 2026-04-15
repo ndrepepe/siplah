@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Image as ImageIcon, FileText, Download, CheckCircle2, Plus } from "lucide-react";
+import { Loader2, Upload, X, Image as ImageIcon, FileText, Download, CheckCircle2, Plus, AlertCircle } from "lucide-react";
 import imageCompression from 'browser-image-compression';
 
 interface AttachmentDialogProps {
@@ -42,32 +42,34 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // PDF Limit: 1MB
+    // PDF Limit: 1MB (1024 KB)
     if (selectedFile.type === 'application/pdf') {
-      if (selectedFile.size > 1024 * 1024) {
+      const pdfLimit = 1024 * 1024;
+      if (selectedFile.size > pdfLimit) {
         toast.error("File PDF terlalu besar. Maksimal 1MB.");
         e.target.value = '';
         return;
       }
       setFile(selectedFile);
       setPreviewUrl(null);
-      toast.success("PDF siap diunggah");
+      toast.success("PDF siap diunggah (Ukuran aman)");
       return;
     }
 
     // Image Limit: 100KB (0.1MB)
     if (selectedFile.type.startsWith('image/')) {
-      const limitInBytes = 100 * 1024;
+      const imageLimit = 100 * 1024;
       
-      if (selectedFile.size > limitInBytes) {
+      if (selectedFile.size > imageLimit) {
         const options = {
-          maxSizeMB: 0.1, // 100KB
-          maxWidthOrHeight: 1280,
+          maxSizeMB: 0.09, // Sedikit di bawah 100KB untuk margin aman
+          maxWidthOrHeight: 1920,
           useWebWorker: true,
+          initialQuality: 0.7
         };
 
         try {
-          const loadingToast = toast.loading("Mengompres gambar (Target 100KB)...");
+          const loadingToast = toast.loading("Gambar melebihi 100KB. Mengompres otomatis...");
           const compressedFile = await imageCompression(selectedFile, options);
           toast.dismiss(loadingToast);
           
@@ -76,10 +78,10 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
           
           const originalSize = (selectedFile.size / 1024).toFixed(1);
           const compressedSize = (compressedFile.size / 1024).toFixed(1);
-          toast.success(`Gambar dikompres: ${originalSize}KB -> ${compressedSize}KB`);
+          toast.success(`Berhasil dikompres: ${originalSize}KB → ${compressedSize}KB`);
         } catch (error) {
           console.error("Compression error:", error);
-          toast.error("Gagal mengompres gambar");
+          toast.error("Gagal mengompres gambar secara otomatis");
           e.target.value = '';
         }
       } else {
@@ -99,7 +101,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${transaction.id}-${Math.random()}.${fileExt}`;
+      const fileName = `${transaction.id}-${Date.now()}.${fileExt}`;
       const filePath = `attachments/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -119,7 +121,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
 
       if (updateError) throw updateError;
 
-      toast.success("Lampiran berhasil diunggah");
+      toast.success("Lampiran berhasil disimpan");
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
@@ -161,7 +163,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          {/* Hidden File Input with ID */}
+          {/* Hidden File Input */}
           <input 
             id="transaction-file-upload"
             type="file"
@@ -170,6 +172,18 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
             accept="image/*,application/pdf"
             onChange={handleFileChange}
           />
+
+          {/* Rules Info */}
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Ketentuan File:</p>
+              <ul className="text-[10px] text-blue-700 list-disc list-inside space-y-0.5">
+                <li>Gambar: Maks 100KB (Otomatis kompres)</li>
+                <li>PDF: Maks 1MB</li>
+              </ul>
+            </div>
+          </div>
 
           {/* Preview Area */}
           <div className="relative group rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-50 aspect-video flex items-center justify-center">
@@ -220,7 +234,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-bold text-slate-700">Belum ada lampiran</p>
-                  <p className="text-[10px] text-muted-foreground">Klik area ini untuk memilih file</p>
+                  <p className="text-[10px] text-muted-foreground">Klik untuk memilih file</p>
                 </div>
               </label>
             )}
@@ -238,7 +252,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
                   <Upload className="w-6 h-6 text-slate-400" />
                   <div className="text-center">
                     <p className="text-[10px] text-muted-foreground">
-                      Gambar (Maks 100KB) | PDF (Maks 1MB)
+                      Klik untuk memilih Gambar atau PDF
                     </p>
                   </div>
                 </div>
@@ -281,7 +295,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
           {file && (
             <Button onClick={handleUpload} disabled={uploading} className="rounded-xl bg-primary shadow-lg shadow-primary/20">
               {uploading ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mengunggah...</>
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</>
               ) : (
                 <><Upload className="w-4 h-4 mr-2" /> Simpan Lampiran</>
               )}
