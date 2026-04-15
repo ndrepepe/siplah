@@ -44,8 +44,13 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
       const arrayBuffer = await pdfFile.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       
-      // Re-saving the PDF can sometimes reduce size by removing unused objects
-      const pdfBytes = await pdfDoc.save({ 
+      // Create a new document to strip out all hidden bloat and metadata
+      const newPdfDoc = await PDFDocument.create();
+      const pages = await newPdfDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
+      pages.forEach((page) => newPdfDoc.addPage(page));
+      
+      // Save with object streams enabled for maximum structure compression
+      const pdfBytes = await newPdfDoc.save({ 
         useObjectStreams: true,
         addDefaultPage: false
       });
@@ -67,14 +72,20 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
     // PDF Handling
     if (selectedFile.type === 'application/pdf') {
       if (selectedFile.size > pdfLimit) {
-        const loadingToast = toast.loading("PDF melebihi 1MB. Mencoba optimasi otomatis...");
+        const loadingToast = toast.loading("PDF melebihi 1MB. Mencoba optimasi agresif...");
         try {
           const optimizedPdf = await compressPDF(selectedFile);
           toast.dismiss(loadingToast);
           
           if (optimizedPdf.size > pdfLimit) {
             const sizeInMb = (optimizedPdf.size / (1024 * 1024)).toFixed(2);
-            toast.error(`Gagal mengompres PDF di bawah 1MB (Ukuran akhir: ${sizeInMb}MB). Silakan gunakan file yang lebih kecil.`);
+            toast.error(
+              <div className="space-y-1">
+                <p className="font-bold">Gagal mengompres PDF di bawah 1MB</p>
+                <p className="text-xs">Ukuran akhir: {sizeInMb}MB. File ini mengandung gambar resolusi tinggi yang tidak bisa dikompres otomatis. Silakan gunakan kompresor PDF online atau perkecil ukuran file sebelum diunggah.</p>
+              </div>,
+              { duration: 6000 }
+            );
             e.target.value = '';
             return;
           }
