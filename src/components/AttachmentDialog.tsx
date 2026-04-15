@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, X, Image as ImageIcon, FileText, Download } from "lucide-react";
+import { Loader2, Upload, X, Image as ImageIcon, FileText, Download, CheckCircle2 } from "lucide-react";
 import imageCompression from 'browser-image-compression';
 
 interface AttachmentDialogProps {
@@ -27,6 +27,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open && transaction?.attachment_url) {
@@ -41,34 +42,54 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // Check if it's an image for compression
-    if (selectedFile.type.startsWith('image/')) {
-      const options = {
-        maxSizeMB: 1, // Target size 1MB
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-      };
-
-      try {
-        const loadingToast = toast.loading("Mengompres gambar...");
-        const compressedFile = await imageCompression(selectedFile, options);
-        toast.dismiss(loadingToast);
-        
-        setFile(compressedFile);
-        setPreviewUrl(URL.createObjectURL(compressedFile));
-        
-        const originalSize = (selectedFile.size / 1024 / 1024).toFixed(2);
-        const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
-        toast.success(`Gambar dikompres: ${originalSize}MB -> ${compressedSize}MB`);
-      } catch (error) {
-        console.error("Compression error:", error);
-        setFile(selectedFile);
-        setPreviewUrl(URL.createObjectURL(selectedFile));
+    // PDF Limit: 1MB
+    if (selectedFile.type === 'application/pdf') {
+      if (selectedFile.size > 1024 * 1024) {
+        toast.error("File PDF terlalu besar. Maksimal 1MB.");
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
       }
-    } else {
-      // For non-image files (PDF, etc), just set it
       setFile(selectedFile);
       setPreviewUrl(null);
+      toast.success("PDF siap diunggah");
+      return;
+    }
+
+    // Image Limit: 100KB (0.1MB)
+    if (selectedFile.type.startsWith('image/')) {
+      const limitInBytes = 100 * 1024;
+      
+      if (selectedFile.size > limitInBytes) {
+        const options = {
+          maxSizeMB: 0.1, // 100KB
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+        };
+
+        try {
+          const loadingToast = toast.loading("Mengompres gambar (Target 100KB)...");
+          const compressedFile = await imageCompression(selectedFile, options);
+          toast.dismiss(loadingToast);
+          
+          setFile(compressedFile);
+          setPreviewUrl(URL.createObjectURL(compressedFile));
+          
+          const originalSize = (selectedFile.size / 1024).toFixed(1);
+          const compressedSize = (compressedFile.size / 1024).toFixed(1);
+          toast.success(`Gambar dikompres: ${originalSize}KB -> ${compressedSize}KB`);
+        } catch (error) {
+          console.error("Compression error:", error);
+          toast.error("Gagal mengompres gambar");
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+      } else {
+        setFile(selectedFile);
+        setPreviewUrl(URL.createObjectURL(selectedFile));
+        toast.success("Gambar siap diunggah");
+      }
+    } else {
+      toast.error("Format file tidak didukung. Gunakan Gambar atau PDF.");
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -81,19 +102,16 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
       const fileName = `${transaction.id}-${Math.random()}.${fileExt}`;
       const filePath = `attachments/${fileName}`;
 
-      // 1. Upload to Storage
       const { error: uploadError } = await supabase.storage
         .from('transaction_attachments')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // 2. Get Public URL
       const { data: { publicUrl } } = supabase.storage
         .from('transaction_attachments')
         .getPublicUrl(filePath);
 
-      // 3. Update Transaction Record
       const { error: updateError } = await supabase
         .from('transactions')
         .update({ attachment_url: publicUrl })
@@ -136,83 +154,125 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-3xl">
         <DialogHeader>
-          <DialogTitle>Lampiran Bukti - {transaction?.school_name}</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Lampiran Bukti</DialogTitle>
+          <p className="text-xs text-muted-foreground">{transaction?.school_name}</p>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          {previewUrl ? (
-            <div className="relative group rounded-lg overflow-hidden border bg-muted aspect-video flex items-center justify-center">
-              {previewUrl.match(/\.(jpeg|jpg|gif|png|webp)/i) || previewUrl.startsWith('blob:') ? (
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <FileText className="w-12 h-12 text-muted-foreground" />
-                  <span className="text-sm font-medium">Dokumen Terlampir</span>
-                </div>
-              )}
-              
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  onClick={() => window.open(previewUrl, '_blank')}
-                >
-                  <Download className="w-4 h-4 mr-2" /> Lihat Full
-                </Button>
-                {!transaction?.is_printed && (
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={handleRemoveAttachment}
-                    disabled={uploading}
-                  >
-                    <X className="w-4 h-4 mr-2" /> Hapus
-                  </Button>
+        <div className="space-y-6 py-4">
+          {/* Preview Area */}
+          <div className="relative group rounded-2xl overflow-hidden border-2 border-slate-100 bg-slate-50 aspect-video flex items-center justify-center">
+            {previewUrl ? (
+              <>
+                {previewUrl.match(/\.(jpeg|jpg|gif|png|webp)/i) || previewUrl.startsWith('blob:') ? (
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <FileText className="w-12 h-12 text-primary" />
+                    <span className="text-sm font-bold text-slate-700">Dokumen PDF Terlampir</span>
+                  </div>
                 )}
+                
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="rounded-full"
+                    onClick={() => window.open(previewUrl, '_blank')}
+                  >
+                    <Download className="w-4 h-4 mr-2" /> Lihat Full
+                  </Button>
+                  {!transaction?.is_printed && (
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="rounded-full"
+                      onClick={handleRemoveAttachment}
+                      disabled={uploading}
+                    >
+                      <X className="w-4 h-4 mr-2" /> Hapus
+                    </Button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div 
+                className="flex flex-col items-center justify-center gap-3 p-8 cursor-pointer w-full h-full"
+                onClick={() => !transaction?.is_printed && fileInputRef.current?.click()}
+              >
+                <div className="bg-primary/10 p-4 rounded-full text-primary">
+                  <ImageIcon className="w-8 h-8" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-bold text-slate-700">Belum ada lampiran</p>
+                  <p className="text-[10px] text-muted-foreground">Klik tombol di bawah untuk mengunggah</p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-3 bg-muted/30">
-              <ImageIcon className="w-10 h-10 text-muted-foreground" />
-              <div className="text-center">
-                <p className="text-sm font-medium">Belum ada lampiran</p>
-                <p className="text-xs text-muted-foreground">Unggah foto bukti transfer atau dokumen lainnya</p>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
+          {/* Upload Section */}
           {!transaction?.is_printed && (
-            <div className="space-y-2">
-              <Label htmlFor="file-upload">Pilih File Baru</Label>
-              <div className="flex gap-2">
+            <div className="space-y-3">
+              <Label className="text-sm font-bold text-slate-700">Unggah File Baru</Label>
+              <div 
+                className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/40 transition-all cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-6 h-6 text-slate-400" />
+                <div className="text-center">
+                  <span className="text-sm font-medium text-primary">Klik untuk pilih file</span>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Gambar (Maks 100KB) | PDF (Maks 1MB)
+                  </p>
+                </div>
                 <Input 
+                  ref={fileInputRef}
                   id="file-upload" 
                   type="file" 
                   accept="image/*,application/pdf" 
                   onChange={handleFileChange}
                   disabled={uploading}
-                  className="cursor-pointer"
+                  className="hidden"
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground">
-                * Gambar akan otomatis dikompres hingga maks 1MB untuk efisiensi.
-              </p>
+
+              {file && (
+                <div className="flex items-center justify-between bg-green-50 border border-green-100 p-3 rounded-xl">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                    <span className="text-xs font-bold text-green-800 truncate">{file.name}</span>
+                    <span className="text-[10px] text-green-600 shrink-0">({(file.size / 1024).toFixed(0)}KB)</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => {
+                      setFile(null); 
+                      setPreviewUrl(transaction?.attachment_url || null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }} 
+                    className="h-7 w-7 text-red-500 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">
             Tutup
           </Button>
           {file && (
-            <Button onClick={handleUpload} disabled={uploading}>
+            <Button onClick={handleUpload} disabled={uploading} className="rounded-xl bg-primary shadow-lg shadow-primary/20">
               {uploading ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mengunggah...</>
               ) : (
