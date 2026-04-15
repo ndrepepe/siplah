@@ -34,14 +34,9 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
     } else if (!open) {
       setFile(null);
       setPreviewUrl(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }, [open, transaction]);
-
-  const handleTriggerFile = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -51,7 +46,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
     if (selectedFile.type === 'application/pdf') {
       if (selectedFile.size > 1024 * 1024) {
         toast.error("File PDF terlalu besar. Maksimal 1MB.");
-        if (e.target) e.target.value = '';
+        e.target.value = '';
         return;
       }
       setFile(selectedFile);
@@ -85,7 +80,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
         } catch (error) {
           console.error("Compression error:", error);
           toast.error("Gagal mengompres gambar");
-          if (e.target) e.target.value = '';
+          e.target.value = '';
         }
       } else {
         setFile(selectedFile);
@@ -94,7 +89,7 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
       }
     } else {
       toast.error("Format file tidak didukung. Gunakan Gambar atau PDF.");
-      if (e.target) e.target.value = '';
+      e.target.value = '';
     }
   };
 
@@ -166,11 +161,12 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          {/* Hidden File Input */}
+          {/* Hidden File Input with ID */}
           <input 
+            id="transaction-file-upload"
             type="file"
             ref={fileInputRef}
-            className="hidden"
+            className="sr-only"
             accept="image/*,application/pdf"
             onChange={handleFileChange}
           />
@@ -215,18 +211,18 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
                 </div>
               </>
             ) : (
-              <div 
-                className="flex flex-col items-center justify-center gap-3 p-8 cursor-pointer w-full h-full"
-                onClick={() => !transaction?.is_printed && handleTriggerFile()}
+              <label 
+                htmlFor="transaction-file-upload"
+                className="flex flex-col items-center justify-center gap-3 p-8 cursor-pointer w-full h-full hover:bg-slate-100/50 transition-colors"
               >
                 <div className="bg-primary/10 p-4 rounded-full text-primary">
                   <ImageIcon className="w-8 h-8" />
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-bold text-slate-700">Belum ada lampiran</p>
-                  <p className="text-[10px] text-muted-foreground">Klik area ini atau tombol di bawah</p>
+                  <p className="text-[10px] text-muted-foreground">Klik area ini untuk memilih file</p>
                 </div>
-              </div>
+              </label>
             )}
           </div>
 
@@ -234,9 +230,9 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
           {!transaction?.is_printed && (
             <div className="space-y-3">
               <Label className="text-sm font-bold text-slate-700">Unggah File Baru</Label>
-              <div 
+              <label 
+                htmlFor="transaction-file-upload"
                 className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-4 bg-slate-50/50 hover:bg-slate-50 hover:border-primary/40 transition-all cursor-pointer"
-                onClick={handleTriggerFile}
               >
                 <div className="flex flex-col items-center gap-2">
                   <Upload className="w-6 h-6 text-slate-400" />
@@ -247,18 +243,10 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
                   </div>
                 </div>
                 
-                <Button 
-                  type="button"
-                  variant="outline" 
-                  className="rounded-xl border-primary/30 text-primary hover:bg-primary/5 font-bold"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleTriggerFile();
-                  }}
-                >
+                <div className="inline-flex items-center justify-center rounded-xl border border-primary/30 bg-white px-4 py-2 text-sm font-bold text-primary shadow-sm hover:bg-primary/5 transition-colors">
                   <Plus className="w-4 h-4 mr-2" /> Pilih File
-                </Button>
-              </div>
+                </div>
+              </label>
 
               {file && (
                 <div className="flex items-center justify-between bg-green-50 border border-green-100 p-3 rounded-xl">
@@ -270,7 +258,8 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       setFile(null); 
                       setPreviewUrl(transaction?.attachment_url || null);
                       if (fileInputRef.current) fileInputRef.current.value = '';
