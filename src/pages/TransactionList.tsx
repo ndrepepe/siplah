@@ -187,7 +187,6 @@ const TransactionList = () => {
           `${formatCurrency(parseFloat(split.amount))} @ ${split.percentage}%`
         ]);
       });
-      // Removed "Rata-rata Efektif" row as requested
     } else {
       tableData.push(["Persentase BM", `${t.bm_percentage}%`]);
     }
@@ -236,7 +235,7 @@ const TransactionList = () => {
   };
 
   return (
-    <Card className="w-full shadow-lg border-t-4 border-t-primary">
+    <Card className="w-[95vw] max-w-none mx-auto shadow-lg border-t-4 border-t-primary">
       <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 pb-4">
         <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
         <div className="flex flex-wrap items-center gap-2">
