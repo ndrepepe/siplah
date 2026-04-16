@@ -187,7 +187,7 @@ const TransactionList = () => {
           `${formatCurrency(parseFloat(split.amount))} @ ${split.percentage}%`
         ]);
       });
-      tableData.push(["Rata-rata Efektif", `${t.bm_percentage.toFixed(2)}%`]);
+      // Removed "Rata-rata Efektif" row as requested
     } else {
       tableData.push(["Persentase BM", `${t.bm_percentage}%`]);
     }
