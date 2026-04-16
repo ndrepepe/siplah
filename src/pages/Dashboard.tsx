@@ -25,15 +25,9 @@ import {
   parseISO
 } from 'date-fns';
 import { id } from 'date-fns/locale';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { MonthMultiSelect } from "@/components/MonthMultiSelect";
+import { YearMultiSelect } from "@/components/YearMultiSelect";
 
 interface Transaction {
   transaction_amount: number;
@@ -54,7 +48,7 @@ const Dashboard = () => {
   
   const now = new Date();
   const [selectedMonths, setSelectedMonths] = useState<string[]>([getMonth(now).toString()]);
-  const [selectedYear, setSelectedYear] = useState<string>(getYear(now).toString());
+  const [selectedYears, setSelectedYears] = useState<string[]>([getYear(now).toString()]);
 
   const years = Array.from({ length: 5 }, (_, i) => (getYear(now) - i).toString());
   const months = [
@@ -70,7 +64,7 @@ const Dashboard = () => {
     if (allTransactions.length > 0) {
       processData();
     }
-  }, [selectedMonths, selectedYear, allTransactions]);
+  }, [selectedMonths, selectedYears, allTransactions]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -94,10 +88,15 @@ const Dashboard = () => {
       ? selectedMonths 
       : Array.from({ length: 12 }, (_, i) => i.toString());
 
-    // 1. Filter transactions for active months in the selected year
+    // If no years selected, use current year
+    const activeYears = selectedYears.length > 0
+      ? selectedYears
+      : [getYear(now).toString()];
+
+    // 1. Filter transactions for active months in the selected years
     const filteredTransactions = allTransactions.filter(t => {
       const date = parseISO(t.created_at);
-      const yearMatch = getYear(date).toString() === selectedYear;
+      const yearMatch = activeYears.includes(getYear(date).toString());
       const monthMatch = activeMonths.includes(getMonth(date).toString());
       return yearMatch && monthMatch;
     });
@@ -119,30 +118,37 @@ const Dashboard = () => {
       avgBM: totalAmount > 0 ? (totalBM / totalAmount) * 100 : 0
     });
 
-    // 2. Process chart data: Show the active months (sorted)
+    // 2. Process chart data: Show the active months across selected years (sorted)
+    const sortedYears = [...activeYears].sort((a, b) => parseInt(a) - parseInt(b));
     const sortedMonthIndices = [...activeMonths].map(Number).sort((a, b) => a - b);
     
-    const newChartData = sortedMonthIndices.map(monthIdx => {
-      const monthDate = setYear(setMonth(new Date(), monthIdx), parseInt(selectedYear));
-      const monthTransactions = allTransactions.filter(t => 
-        isSameMonth(parseISO(t.created_at), monthDate)
-      );
+    const newChartData: any[] = [];
 
-      let mAmount = 0;
-      let mBM = 0;
+    sortedYears.forEach(yearStr => {
+      const year = parseInt(yearStr);
+      sortedMonthIndices.forEach(monthIdx => {
+        const monthDate = setYear(setMonth(new Date(), monthIdx), year);
+        const monthTransactions = allTransactions.filter(t => 
+          isSameMonth(parseISO(t.created_at), monthDate)
+        );
 
-      monthTransactions.forEach(t => {
-        const amount = Number(t.transaction_amount);
-        const bm = amount * (Number(t.bm_percentage) / 100);
-        mAmount += amount;
-        mBM += bm;
+        let mAmount = 0;
+        let mBM = 0;
+
+        monthTransactions.forEach(t => {
+          const amount = Number(t.transaction_amount);
+          const bm = amount * (Number(t.bm_percentage) / 100);
+          mAmount += amount;
+          mBM += bm;
+        });
+
+        newChartData.push({
+          name: format(monthDate, 'MMM yy', { locale: id }),
+          total: mAmount,
+          bm: mBM,
+          year: yearStr
+        });
       });
-
-      return {
-        name: format(monthDate, 'MMM yy', { locale: id }),
-        total: mAmount,
-        bm: mBM
-      };
     });
 
     setChartData(newChartData);
@@ -159,7 +165,7 @@ const Dashboard = () => {
 
   const resetFilters = () => {
     setSelectedMonths([getMonth(now).toString()]);
-    setSelectedYear(getYear(now).toString());
+    setSelectedYears([getYear(now).toString()]);
   };
 
   if (loading) {
@@ -176,6 +182,12 @@ const Dashboard = () => {
       ? months[parseInt(selectedMonths[0])]
       : `${selectedMonths.length} Bulan`;
 
+  const selectedYearsLabel = selectedYears.length === 0
+    ? "Semua Tahun"
+    : selectedYears.length === 1
+      ? selectedYears[0]
+      : `${selectedYears.length} Tahun`;
+
   return (
     <div className="space-y-8">
       {/* Filters Section */}
@@ -188,18 +200,13 @@ const Dashboard = () => {
             months={months} 
           />
         </div>
-        <div className="space-y-1.5 w-full md:w-32">
-          <label className="text-xs font-bold text-slate-500 uppercase ml-1">Tahun</label>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="bg-white rounded-xl border-primary/20">
-              <SelectValue placeholder="Tahun" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map(year => (
-                <SelectItem key={year} value={year}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="space-y-1.5 flex-1">
+          <label className="text-xs font-bold text-slate-500 uppercase ml-1">Pilih Tahun</label>
+          <YearMultiSelect 
+            selected={selectedYears} 
+            onChange={setSelectedYears} 
+            years={years} 
+          />
         </div>
         <Button 
           variant="ghost" 
@@ -274,7 +281,7 @@ const Dashboard = () => {
               <Calendar className="w-5 h-5 text-primary" />
               Perbandingan Transaksi
             </CardTitle>
-            <CardDescription>Data untuk periode yang dipilih di tahun {selectedYear}</CardDescription>
+            <CardDescription>Data untuk periode {selectedMonthsLabel} di tahun {selectedYears.join(', ')}</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px] pt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -322,7 +329,7 @@ const Dashboard = () => {
               <TrendingUp className="w-5 h-5 text-orange-500" />
               Perbandingan BM
             </CardTitle>
-            <CardDescription>Data untuk periode yang dipilih di tahun {selectedYear}</CardDescription>
+            <CardDescription>Data untuk periode {selectedMonthsLabel} di tahun {selectedYears.join(', ')}</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px] pt-4">
             <ResponsiveContainer width="100%" height="100%">
