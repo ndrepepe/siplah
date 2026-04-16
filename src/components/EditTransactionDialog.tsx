@@ -18,7 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Plus, Trash2, Calculator } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface BMSplit {
+  amount: string;
+  percentage: string;
+}
 
 interface EditTransactionDialogProps {
   transaction: any;
@@ -29,6 +35,8 @@ interface EditTransactionDialogProps {
 
 const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: EditTransactionDialogProps) => {
   const [formData, setFormData] = useState<any>({});
+  const [bmType, setBmType] = useState<"single" | "multiple">("single");
+  const [bmSplits, setBmSplits] = useState<BMSplit[]>([{ amount: "", percentage: "" }]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -38,8 +46,54 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
         transaction_amount: transaction.transaction_amount?.toString() || "",
         bm_percentage: transaction.bm_percentage?.toString() || ""
       });
+      setBmType("single"); // Default to single on edit for simplicity
+      setBmSplits([{ amount: transaction.transaction_amount?.toString() || "", percentage: transaction.bm_percentage?.toString() || "" }]);
     }
   }, [transaction]);
+
+  const addBmSplit = () => {
+    setBmSplits([...bmSplits, { amount: "", percentage: "" }]);
+  };
+
+  const removeBmSplit = (index: number) => {
+    const newSplits = bmSplits.filter((_, i) => i !== index);
+    setBmSplits(newSplits.length ? newSplits : [{ amount: "", percentage: "" }]);
+  };
+
+  const updateBmSplit = (index: number, field: keyof BMSplit, value: string) => {
+    const newSplits = [...bmSplits];
+    newSplits[index][field] = value;
+    setBmSplits(newSplits);
+  };
+
+  const calculateEffectiveBM = () => {
+    if (bmType === "single") return parseFloat(formData.bm_percentage) || 0;
+    
+    const totalAmount = parseFloat(formData.transaction_amount) || 0;
+    if (totalAmount <= 0) return 0;
+
+    let totalBMValue = 0;
+    bmSplits.forEach(split => {
+      const amt = parseFloat(split.amount) || 0;
+      const pct = parseFloat(split.percentage) || 0;
+      totalBMValue += (amt * pct) / 100;
+    });
+
+    return (totalBMValue / totalAmount) * 100;
+  };
+
+  const validateSplits = () => {
+    if (bmType === "single") return true;
+    
+    const totalAmount = parseFloat(formData.transaction_amount) || 0;
+    const splitTotal = bmSplits.reduce((sum, split) => sum + (parseFloat(split.amount) || 0), 0);
+    
+    if (Math.abs(totalAmount - splitTotal) > 0.01) {
+      toast.error(`Total pembagian (${splitTotal.toLocaleString()}) harus sama dengan nilai transaksi (${totalAmount.toLocaleString()})`);
+      return false;
+    }
+    return true;
+  };
 
   const handleSave = async () => {
     if (!formData.school_name || !formData.po_number || !formData.transaction_amount) {
@@ -47,16 +101,12 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
       return;
     }
 
-    // Clean numeric values
-    const cleanAmount = parseFloat(formData.transaction_amount.toString().replace(/[^0-9.]/g, ''));
-    const cleanBm = formData.bm_percentage ? parseFloat(formData.bm_percentage.toString().replace(/[^0-9.]/g, '')) : 0;
-
-    if (isNaN(cleanAmount)) {
-      toast.error("Format nominal tidak valid");
-      return;
-    }
+    if (!validateSplits()) return;
 
     setIsSaving(true);
+    const cleanAmount = parseFloat(formData.transaction_amount.toString().replace(/[^0-9.]/g, ''));
+    const effectiveBM = calculateEffectiveBM();
+
     try {
       const { error } = await supabase
         .from("transactions")
@@ -64,7 +114,7 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           school_name: formData.school_name,
           po_number: formData.po_number,
           transaction_amount: cleanAmount,
-          bm_percentage: cleanBm,
+          bm_percentage: effectiveBM,
           cabang: formData.cabang,
           nama_siplah: formData.nama_siplah,
           produk: formData.produk,
@@ -88,6 +138,9 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
       setIsSaving(false);
     }
   };
+
+  const splitTotal = bmSplits.reduce((sum, split) => sum + (parseFloat(split.amount) || 0), 0);
+  const remainingAmount = (parseFloat(formData.transaction_amount) || 0) - splitTotal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,21 +188,105 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           <div className="space-y-2">
             <Label>Nominal (Rp)</Label>
             <Input 
-              type="text"
-              inputMode="numeric"
+              type="number"
               value={formData.transaction_amount || ""} 
               onChange={(e) => setFormData({...formData, transaction_amount: e.target.value})}
             />
           </div>
+
           <div className="space-y-2">
-            <Label>% BM (Opsional)</Label>
-            <Input 
-              type="text"
-              inputMode="decimal"
-              value={formData.bm_percentage || ""} 
-              onChange={(e) => setFormData({...formData, bm_percentage: e.target.value})}
-            />
+            <Label>Status</Label>
+            <Select 
+              value={formData.status || "DIAJUKAN"} 
+              onValueChange={(val) => setFormData({...formData, status: val})}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
+                <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* BM Section */}
+          <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-primary" />
+                Pengaturan % BM
+              </Label>
+              <Tabs value={bmType} onValueChange={(v: any) => setBmType(v)} className="w-auto">
+                <TabsList className="grid w-full grid-cols-2 h-8 p-1">
+                  <TabsTrigger value="single" className="text-xs">Single</TabsTrigger>
+                  <TabsTrigger value="multiple" className="text-xs">Multiple</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {bmType === "single" ? (
+              <div className="space-y-2">
+                <Label>% BM</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.bm_percentage || ""}
+                  onChange={(e) => setFormData({...formData, bm_percentage: e.target.value})}
+                />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {bmSplits.map((split, index) => (
+                  <div key={index} className="flex gap-2 items-end">
+                    <div className="flex-1 space-y-1.5">
+                      <Label className="text-[10px] uppercase text-muted-foreground">Nominal PO</Label>
+                      <Input
+                        type="number"
+                        value={split.amount}
+                        onChange={(e) => updateBmSplit(index, "amount", e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="w-24 space-y-1.5">
+                      <Label className="text-[10px] uppercase text-muted-foreground">% BM</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={split.percentage}
+                        onChange={(e) => updateBmSplit(index, "percentage", e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => removeBmSplit(index)}
+                      className="h-9 w-9 text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                  <div className="text-[11px] font-medium">
+                    <span className={remainingAmount === 0 ? "text-green-600" : "text-amber-600"}>
+                      Sisa: {remainingAmount.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addBmSplit}
+                    className="h-8 text-xs"
+                  >
+                    <Plus className="w-3 h-3 mr-1" /> Tambah Baris
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label>Produk</Label>
             <Select 
@@ -173,20 +310,6 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
               <SelectContent>
                 <SelectItem value="NON REKANAN">NON REKANAN</SelectItem>
                 <SelectItem value="REKANAN">REKANAN</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <Select 
-              value={formData.status || "DIAJUKAN"} 
-              onValueChange={(val) => setFormData({...formData, status: val})}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
-                <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
               </SelectContent>
             </Select>
           </div>
