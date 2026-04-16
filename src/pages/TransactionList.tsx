@@ -235,8 +235,8 @@ const TransactionList = () => {
   };
 
   return (
-    <Card className="w-[95vw] max-w-none mx-auto shadow-lg border-t-4 border-t-primary">
-      <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 pb-4">
+    <Card className="w-full max-w-[100vw] shadow-lg border-t-4 border-t-primary rounded-none lg:rounded-xl overflow-hidden">
+      <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 pb-4 px-4 sm:px-6">
         <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -250,7 +250,7 @@ const TransactionList = () => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 sm:px-6">
         <div className="space-y-4 mb-6">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
             <div className="relative flex-1 w-full">
@@ -316,18 +316,18 @@ const TransactionList = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="font-bold">Tanggal</TableHead>
-                <TableHead className="font-bold">Sekolah / Cabang</TableHead>
-                <TableHead className="font-bold">No PO / SIPLAH</TableHead>
-                <TableHead className="font-bold">Produk</TableHead>
-                <TableHead className="font-bold">Nominal</TableHead>
-                <TableHead className="font-bold text-center">% BM</TableHead>
-                <TableHead className="font-bold">Status</TableHead>
-                <TableHead className="font-bold">Kode Transaksi</TableHead>
-                <TableHead className="font-bold">Rekanan</TableHead>
-                <TableHead className="font-bold">Bank / Rekening</TableHead>
-                <TableHead className="font-bold text-center">Print</TableHead>
-                <TableHead className="font-bold text-center">Aksi</TableHead>
+                <TableHead className="font-bold px-2">Tanggal</TableHead>
+                <TableHead className="font-bold px-2">Sekolah / Cabang</TableHead>
+                <TableHead className="font-bold px-2">No PO / SIPLAH</TableHead>
+                <TableHead className="font-bold px-2">Produk</TableHead>
+                <TableHead className="font-bold px-2">Nominal</TableHead>
+                <TableHead className="font-bold text-center px-2">% BM</TableHead>
+                <TableHead className="font-bold px-2">Status</TableHead>
+                <TableHead className="font-bold px-2">Kode Transaksi</TableHead>
+                <TableHead className="font-bold px-2">Rekanan</TableHead>
+                <TableHead className="font-bold px-2">Bank / Rekening</TableHead>
+                <TableHead className="font-bold text-center px-2">Print</TableHead>
+                <TableHead className="font-bold text-center px-2">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -355,93 +355,94 @@ const TransactionList = () => {
                       t.status === "DIBATALKAN" ? "bg-pink-50 hover:bg-pink-100" : "hover:bg-muted/30"
                     )}
                   >
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="whitespace-nowrap px-2">
                       {new Date(t.created_at).toLocaleDateString("id-ID")}
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{t.school_name}</div>
-                      <div className="text-xs text-muted-foreground">{t.cabang}</div>
+                    <TableCell className="px-2">
+                      <div className="font-medium text-sm">{t.school_name}</div>
+                      <div className="text-[10px] text-muted-foreground">{t.cabang}</div>
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{t.po_number}</div>
-                      <Badge variant="outline" className="text-[10px] px-1 py-0">
+                    <TableCell className="px-2">
+                      <div className="font-medium text-sm">{t.po_number}</div>
+                      <Badge variant="outline" className="text-[9px] px-1 py-0">
                         {t.nama_siplah}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={t.produk === "BOOK" ? "default" : "secondary"}>
+                    <TableCell className="px-2">
+                      <Badge variant={t.produk === "BOOK" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
                         {t.produk}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-semibold text-primary">
+                    <TableCell className="font-semibold text-primary text-sm px-2">
                       {formatCurrency(t.transaction_amount)}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center px-2">
                       {t.bm_splits && Array.isArray(t.bm_splits) ? (
                         <div className="flex flex-col gap-1 items-center">
                           {t.bm_splits.map((split: any, i: number) => (
-                            <div key={i} className="text-[10px] whitespace-nowrap bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            <div key={i} className="text-[9px] whitespace-nowrap bg-slate-100 px-1 py-0.5 rounded border border-slate-200">
                               {split.percentage}%
                             </div>
                           ))}
-                          <div className="text-[9px] font-bold text-primary border-t pt-0.5">
+                          <div className="text-[8px] font-bold text-primary border-t pt-0.5">
                             Avg: {t.bm_percentage.toFixed(1)}%
                           </div>
                         </div>
                       ) : (
-                        <span className="font-medium">{t.bm_percentage}%</span>
+                        <span className="font-medium text-sm">{t.bm_percentage}%</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-2">
                       <Badge
                         variant={t.status === "DIBATALKAN" ? "destructive" : "outline"}
                         className={cn(
+                          "text-[10px] px-1.5 py-0",
                           t.status === "DIAJUKAN" && "bg-green-50 text-green-700 border-green-200"
                         )}
                       >
                         {t.status || "DIAJUKAN"}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <code className="bg-muted px-2 py-1 rounded text-xs font-mono border">
+                    <TableCell className="px-2">
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono border">
                         {t.code}
                       </code>
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{t.rekanan_type}</div>
-                      <div className="text-xs text-muted-foreground">
+                    <TableCell className="px-2">
+                      <div className="font-medium text-xs">{t.rekanan_type}</div>
+                      <div className="text-[10px] text-muted-foreground leading-tight">
                         {t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{t.bank_name || "-"}</div>
-                      <div className="text-xs text-muted-foreground">{t.account_number || "-"}</div>
-                      <div className="text-[10px] italic">{t.account_owner || "-"}</div>
+                    <TableCell className="px-2">
+                      <div className="font-medium text-xs">{t.bank_name || "-"}</div>
+                      <div className="text-[10px] text-muted-foreground">{t.account_number || "-"}</div>
+                      <div className="text-[9px] italic leading-tight">{t.account_owner || "-"}</div>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center px-2">
                       <div className="flex items-center justify-center gap-1">
                         {t.is_printed ? (
-                          <CheckCircle className="w-5 h-5 text-green-600" />
+                          <CheckCircle className="w-4 h-4 text-green-600" />
                         ) : (
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                             onClick={() => handlePrint(t.id)}
                             title="Tandai sebagai sudah di-print"
                           >
-                            <Circle className="w-4 h-4" />
+                            <Circle className="w-3.5 h-3.5" />
                           </Button>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-1">
+                    <TableCell className="px-2">
+                      <div className="flex items-center justify-center gap-0.5">
                         <Button
                           variant="ghost"
                           size="icon"
                           className={cn(
-                            "h-8 w-8",
+                            "h-7 w-7",
                             t.attachment_url 
                               ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50" 
                               : "text-slate-400 hover:text-slate-500 hover:bg-slate-50"
@@ -452,42 +453,42 @@ const TransactionList = () => {
                           }}
                           title="Lampiran Bukti"
                         >
-                          {t.attachment_url ? <ImageIcon className="w-4 h-4" /> : <Paperclip className="w-4 h-4" />}
+                          {t.attachment_url ? <ImageIcon className="w-3.5 h-3.5" /> : <Paperclip className="w-3.5 h-3.5" />}
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                          className="h-7 w-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                           onClick={() => downloadPDF(t)}
                           title="Download PDF"
                         >
-                          <FileDown className="w-4 h-4" />
+                          <FileDown className="w-3.5 h-3.5" />
                         </Button>
                         {!t.is_printed && (
                           <>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                               onClick={() => {
                                 setEditingTransaction(t);
                                 setIsEditDialogOpen(true);
                               }}
                               title="Edit"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-3.5 h-3.5" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
                               onClick={() => {
                                 setDeletingId(t.id);
                                 setIsDeleteDialogOpen(true);
                               }}
                               title="Hapus"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                           </>
                         )}
