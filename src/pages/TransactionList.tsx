@@ -37,7 +37,6 @@ import {
 } from "@/components/ui/select";
 import EditTransactionDialog from "@/components/EditTransactionDialog";
 import AttachmentDialog from "@/components/AttachmentDialog";
-import { Label } from "@/components/ui/label";
 
 const TransactionList = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -133,7 +132,6 @@ const TransactionList = () => {
       printFilter === "printed" ? t.is_printed === true :
       t.is_printed === false || t.is_printed === null;
 
-    // Date filtering
     const transactionDate = new Date(t.created_at).toISOString().split('T')[0];
     const matchesStartDate = startDate ? transactionDate >= startDate : true;
     const matchesEndDate = endDate ? transactionDate <= endDate : true;
@@ -147,49 +145,6 @@ const TransactionList = () => {
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const exportToExcel = () => {
-    if (filteredTransactions.length === 0) {
-      toast.error("Tidak ada data untuk ekspor");
-      return;
-    }
-
-    const ws_data = [
-      ["Tanggal", "Sekolah / Cabang", "No PO / SIPLAH", "Produk", "Nominal", "% BM", "Status", "Kode Transaksi", "Rekanan", "Nama Rekanan", "Bank", "No Rekening", "Pemilik Rekening", "Status Print"]
-    ];
-
-    filteredTransactions.forEach(t => {
-      ws_data.push([
-        new Date(t.created_at).toLocaleDateString("id-ID"),
-        `${t.school_name} (${t.cabang})`,
-        `${t.po_number} (${t.nama_siplah})`,
-        t.produk,
-        formatCurrency(t.transaction_amount),
-        `${t.bm_percentage}%`,
-        t.status,
-        t.code,
-        t.rekanan_type,
-        t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN",
-        t.bank_name || "-",
-        t.account_number || "-",
-        t.account_owner || "-",
-        t.is_printed ? "SUDAH PRINT" : "BELUM PRINT"
-      ]);
-    });
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    XLSX.utils.book_append_sheet(wb, ws, "Transaksi");
-
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url = URL.createObjectURL(data);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'transaksi.xlsx';
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   const downloadPDF = (t: any) => {
@@ -215,16 +170,32 @@ const TransactionList = () => {
       ["Platform SIPLAH", t.nama_siplah],
       ["Jenis Produk", t.produk],
       ["Nominal Transaksi", formatCurrency(t.transaction_amount)],
-      ["Persentase BM", `${t.bm_percentage}%`],
       ["Status Transaksi", t.status],
       ["Tipe Rekanan", t.rekanan_type],
       ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"],
-      ["", ""],
-      ["INFORMASI PEMBAYARAN BM", ""],
-      ["Nama Bank", t.bank_name || "-"],
-      ["Nomor Rekening", t.account_number || "-"],
-      ["Pemilik Rekening", t.account_owner || "-"],
     ];
+
+    // Add BM Details
+    tableData.push(["", ""]);
+    tableData.push(["RINCIAN % BM", ""]);
+    
+    if (t.bm_splits && Array.isArray(t.bm_splits)) {
+      t.bm_splits.forEach((split: any, idx: number) => {
+        tableData.push([
+          `Bagian ${idx + 1}`, 
+          `${formatCurrency(parseFloat(split.amount))} @ ${split.percentage}%`
+        ]);
+      });
+      tableData.push(["Rata-rata Efektif", `${t.bm_percentage.toFixed(2)}%`]);
+    } else {
+      tableData.push(["Persentase BM", `${t.bm_percentage}%`]);
+    }
+
+    tableData.push(["", ""]);
+    tableData.push(["INFORMASI PEMBAYARAN BM", ""]);
+    tableData.push(["Nama Bank", t.bank_name || "-"]);
+    tableData.push(["Nomor Rekening", t.account_number || "-"]);
+    tableData.push(["Pemilik Rekening", t.account_owner || "-"]);
 
     autoTable(doc, {
       startY: 35,
@@ -240,7 +211,8 @@ const TransactionList = () => {
         1: { cellWidth: 'auto' }
       },
       didParseCell: function(data) {
-        if (data.row.raw[0] === "INFORMASI PEMBAYARAN BM") {
+        const label = data.row.raw[0];
+        if (label === "INFORMASI PEMBAYARAN BM" || label === "RINCIAN % BM") {
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.fillColor = [241, 245, 249];
           data.cell.styles.textColor = [30, 41, 59];
@@ -275,15 +247,6 @@ const TransactionList = () => {
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportToExcel}
-            className="text-blue-500 hover:text-blue-700"
-          >
-            <FileDown className="w-4 h-4 mr-2" />
-            Export ke Excel
           </Button>
         </div>
       </CardHeader>
@@ -413,8 +376,21 @@ const TransactionList = () => {
                     <TableCell className="font-semibold text-primary">
                       {formatCurrency(t.transaction_amount)}
                     </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {t.bm_percentage}%
+                    <TableCell className="text-center">
+                      {t.bm_splits ? (
+                        <div className="flex flex-col gap-1 items-center">
+                          {t.bm_splits.map((split: any, i: number) => (
+                            <div key={i} className="text-[10px] whitespace-nowrap bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                              {split.percentage}%
+                            </div>
+                          ))}
+                          <div className="text-[9px] font-bold text-primary border-t pt-0.5">
+                            Avg: {t.bm_percentage.toFixed(1)}%
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="font-medium">{t.bm_percentage}%</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge

@@ -95,17 +95,6 @@ const Generator = () => {
     return true;
   };
 
-  const sendWhatsAppNotification = async (data: any) => {
-    try {
-      const { error } = await supabase.functions.invoke('send-whatsapp', {
-        body: data
-      });
-      if (error) console.error("Edge Function Error:", error);
-    } catch (err) {
-      console.error("Gagal memanggil fungsi WhatsApp:", err);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -115,11 +104,6 @@ const Generator = () => {
     }
 
     if (!validateSplits()) return;
-
-    if (rekananType === "REKANAN" && !namaRekanan) {
-      toast.error("Mohon isi Nama Rekanan");
-      return;
-    }
 
     setIsSaving(true);
     const amount = parseFloat(transactionAmount);
@@ -133,6 +117,7 @@ const Generator = () => {
           po_number: poNumber,
           transaction_amount: amount,
           bm_percentage: effectiveBM,
+          bm_splits: bmType === "multiple" ? bmSplits : null, // Save splits if multiple
           cabang,
           nama_siplah: namaSiplah,
           produk,
@@ -146,13 +131,6 @@ const Generator = () => {
         });
 
       if (error) throw error;
-
-      sendWhatsAppNotification({
-        school_name: schoolName,
-        po_number: poNumber,
-        transaction_amount: amount,
-        code: generatedCode
-      });
 
       showToast({
         title: "Berhasil!",
@@ -387,7 +365,6 @@ const Generator = () => {
               </div>
             )}
 
-            {/* Group: BM diberikan melalui */}
             <div className="md:col-span-2 space-y-4 pt-4 border-t">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">BM diberikan melalui</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -396,7 +373,7 @@ const Generator = () => {
                   <Input
                     id="bankName"
                     value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
+                    onChange={(e) => setFormData({...formData, bank_name: e.target.value})}
                     placeholder="Contoh: BCA, Mandiri"
                   />
                 </div>
@@ -405,7 +382,7 @@ const Generator = () => {
                   <Input
                     id="accountNumber"
                     value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
+                    onChange={(e) => setFormData({...formData, account_number: e.target.value})}
                     placeholder="Nomor Rekening"
                   />
                 </div>
@@ -414,7 +391,7 @@ const Generator = () => {
                   <Input
                     id="accountOwner"
                     value={accountOwner}
-                    onChange={(e) => setAccountOwner(e.target.value)}
+                    onChange={(e) => setFormData({...formData, account_owner: e.target.value})}
                     placeholder="Nama Pemilik Rekening"
                   />
                 </div>
