@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -40,12 +40,25 @@ import EditTransactionDialog from "@/components/EditTransactionDialog";
 import AttachmentDialog from "@/components/AttachmentDialog";
 
 const TransactionList = () => {
+  // Helper to get current month range
+  const getCurrentMonthRange = () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    return {
+      start: firstDay.toISOString().split('T')[0],
+      end: lastDay.toISOString().split('T')[0]
+    };
+  };
+
+  const monthRange = getCurrentMonthRange();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [printFilter, setPrintFilter] = useState<string>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>(monthRange.start);
+  const [endDate, setEndDate] = useState<string>(monthRange.end);
 
   // State for Edit
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
@@ -59,13 +72,23 @@ const TransactionList = () => {
   const [attachmentTransaction, setAttachmentTransaction] = useState<any>(null);
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("transactions")
         .select("*")
         .order("created_at", { ascending: false });
+
+      // Apply server-side date filtering for performance
+      if (startDate) {
+        query = query.gte("created_at", `${startDate}T00:00:00`);
+      }
+      if (endDate) {
+        query = query.lte("created_at", `${endDate}T23:59:59`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setTransactions(data || []);
@@ -75,11 +98,11 @@ const TransactionList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+  }, [fetchTransactions]);
 
   const handleDelete = async () => {
     if (!deletingId) return;
@@ -133,11 +156,7 @@ const TransactionList = () => {
       printFilter === "printed" ? t.is_printed === true :
       t.is_printed === false || t.is_printed === null;
 
-    const transactionDate = new Date(t.created_at).toISOString().split('T')[0];
-    const matchesStartDate = startDate ? transactionDate >= startDate : true;
-    const matchesEndDate = endDate ? transactionDate <= endDate : true;
-
-    return matchesSearch && matchesPrintFilter && matchesStartDate && matchesEndDate;
+    return matchesSearch && matchesPrintFilter;
   });
 
   const formatCurrency = (amount: number) => {
@@ -230,6 +249,12 @@ const TransactionList = () => {
   };
 
   const resetDateFilters = () => {
+    const range = getCurrentMonthRange();
+    setStartDate(range.start);
+    setEndDate(range.end);
+  };
+
+  const clearDateFilters = () => {
     setStartDate("");
     setEndDate("");
   };
@@ -237,7 +262,14 @@ const TransactionList = () => {
   return (
     <Card className="w-full max-w-[100vw] shadow-lg border-t-4 border-t-primary rounded-none lg:rounded-xl overflow-hidden">
       <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 pb-4 px-4 sm:px-6">
-        <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
+        <div>
+          <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            {startDate && endDate 
+              ? `Menampilkan data periode ${new Date(startDate).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`
+              : "Menampilkan semua data transaksi"}
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
@@ -298,14 +330,26 @@ const TransactionList = () => {
                   />
                 </div>
                 {(startDate || endDate) && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={resetDateFilters}
-                    className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={resetDateFilters}
+                      title="Reset ke bulan ini"
+                      className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-50 shrink-0"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={clearDateFilters}
+                      title="Hapus filter tanggal (Tampilkan semua)"
+                      className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -343,7 +387,7 @@ const TransactionList = () => {
               ) : filteredTransactions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
-                    Tidak ada data ditemukan.
+                    Tidak ada data ditemukan untuk periode ini.
                   </TableCell>
                 </TableRow>
               ) : (
