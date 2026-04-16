@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -117,7 +119,7 @@ const Generator = () => {
           po_number: poNumber,
           transaction_amount: amount,
           bm_percentage: effectiveBM,
-          bm_splits: bmType === "multiple" ? bmSplits : null, // Save splits if multiple
+          bm_splits: bmType === "multiple" ? bmSplits : null,
           cabang,
           nama_siplah: namaSiplah,
           produk,
@@ -373,7 +375,7 @@ const Generator = () => {
                   <Input
                     id="bankName"
                     value={bankName}
-                    onChange={(e) => setFormData({...formData, bank_name: e.target.value})}
+                    onChange={(e) => setBankName(e.target.value)}
                     placeholder="Contoh: BCA, Mandiri"
                   />
                 </div>
@@ -382,7 +384,7 @@ const Generator = () => {
                   <Input
                     id="accountNumber"
                     value={accountNumber}
-                    onChange={(e) => setFormData({...formData, account_number: e.target.value})}
+                    onChange={(e) => setAccountNumber(e.target.value)}
                     placeholder="Nomor Rekening"
                   />
                 </div>
@@ -391,7 +393,7 @@ const Generator = () => {
                   <Input
                     id="accountOwner"
                     value={accountOwner}
-                    onChange={(e) => setFormData({...formData, account_owner: e.target.value})}
+                    onChange={(e) => setAccountOwner(e.target.value)}
                     placeholder="Nama Pemilik Rekening"
                   />
                 </div>

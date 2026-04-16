@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
@@ -377,7 +378,7 @@ const TransactionList = () => {
                       {formatCurrency(t.transaction_amount)}
                     </TableCell>
                     <TableCell className="text-center">
-                      {t.bm_splits ? (
+                      {t.bm_splits && Array.isArray(t.bm_splits) ? (
                         <div className="flex flex-col gap-1 items-center">
                           {t.bm_splits.map((split: any, i: number) => (
                             <div key={i} className="text-[10px] whitespace-nowrap bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
@@ -516,7 +517,7 @@ const TransactionList = () => {
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -524,8 +525,8 @@ const TransactionList = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 rounded-xl">
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>

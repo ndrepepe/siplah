@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -46,8 +48,14 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
         transaction_amount: transaction.transaction_amount?.toString() || "",
         bm_percentage: transaction.bm_percentage?.toString() || ""
       });
-      setBmType("single"); // Default to single on edit for simplicity
-      setBmSplits([{ amount: transaction.transaction_amount?.toString() || "", percentage: transaction.bm_percentage?.toString() || "" }]);
+      
+      if (transaction.bm_splits && Array.isArray(transaction.bm_splits)) {
+        setBmType("multiple");
+        setBmSplits(transaction.bm_splits);
+      } else {
+        setBmType("single");
+        setBmSplits([{ amount: transaction.transaction_amount?.toString() || "", percentage: transaction.bm_percentage?.toString() || "" }]);
+      }
     }
   }, [transaction]);
 
@@ -115,6 +123,7 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           po_number: formData.po_number,
           transaction_amount: cleanAmount,
           bm_percentage: effectiveBM,
+          bm_splits: bmType === "multiple" ? bmSplits : null,
           cabang: formData.cabang,
           nama_siplah: formData.nama_siplah,
           produk: formData.produk,
@@ -144,9 +153,9 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl">
         <DialogHeader>
-          <DialogTitle>Edit Transaksi</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Edit Transaksi</DialogTitle>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
@@ -353,8 +362,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">Batal</Button>
+          <Button onClick={handleSave} disabled={isSaving} className="rounded-xl">
             {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             Simpan Perubahan
           </Button>
