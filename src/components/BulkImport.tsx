@@ -52,7 +52,7 @@ const BulkImport = () => {
 
       message += `_Pesan otomatis dari Grand Line Manager_`;
 
-      await supabase.functions.invoke('send-whatsapp', {
+      await supabase.functions.invoke('https://prnnjpvsssmasnvwohmo.supabase.co/functions/v1/send-whatsapp', {
         body: { message }
       });
     } catch (err) {

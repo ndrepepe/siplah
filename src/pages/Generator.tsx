@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,6 +97,21 @@ const Generator = () => {
     return true;
   };
 
+  const sendWhatsAppNotification = async (data: any) => {
+    try {
+      await supabase.functions.invoke('https://prnnjpvsssmasnvwohmo.supabase.co/functions/v1/send-whatsapp', {
+        body: {
+          school_name: data.school_name,
+          po_number: data.po_number,
+          transaction_amount: data.transaction_amount,
+          code: data.code
+        }
+      });
+    } catch (err) {
+      console.error("[Generator] Gagal mengirim notifikasi WhatsApp:", err);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -111,32 +126,41 @@ const Generator = () => {
     const amount = parseFloat(transactionAmount);
     const effectiveBM = calculateEffectiveBM();
     
+    const transactionData = {
+      school_name: schoolName,
+      po_number: poNumber,
+      transaction_amount: amount,
+      bm_percentage: effectiveBM,
+      bm_splits: bmType === "multiple" ? bmSplits : null,
+      cabang,
+      nama_siplah: namaSiplah,
+      produk,
+      rekanan_type: rekananType,
+      nama_rekanan: rekananType === "REKANAN" ? namaRekanan : null,
+      bank_name: bankName,
+      account_number: accountNumber,
+      account_owner: accountOwner,
+      status: status,
+      code: generatedCode
+    };
+
     try {
       const { error } = await supabase
         .from("transactions")
-        .insert({
-          school_name: schoolName,
-          po_number: poNumber,
-          transaction_amount: amount,
-          bm_percentage: effectiveBM,
-          bm_splits: bmType === "multiple" ? bmSplits : null,
-          cabang,
-          nama_siplah: namaSiplah,
-          produk,
-          rekanan_type: rekananType,
-          nama_rekanan: rekananType === "REKANAN" ? namaRekanan : null,
-          bank_name: bankName,
-          account_number: accountNumber,
-          account_owner: accountOwner,
-          status: status,
-          code: generatedCode
-        });
+        .insert(transactionData);
 
       if (error) throw error;
 
       showToast({
         title: "Berhasil!",
         description: "Data transaksi disimpan.",
+      });
+
+      // Kirim Notifikasi WhatsApp
+      toast.promise(sendWhatsAppNotification(transactionData), {
+        loading: 'Mengirim notifikasi WhatsApp...',
+        success: 'Notifikasi WhatsApp terkirim!',
+        error: 'Gagal mengirim notifikasi WhatsApp',
       });
 
       // Reset Form
