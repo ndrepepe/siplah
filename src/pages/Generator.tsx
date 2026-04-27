@@ -99,7 +99,8 @@ const Generator = () => {
 
   const sendWhatsAppNotification = async (data: any) => {
     try {
-      await supabase.functions.invoke('https://prnnjpvsssmasnvwohmo.supabase.co/functions/v1/send-whatsapp', {
+      // Menggunakan nama fungsi langsung untuk invoke yang lebih stabil
+      const { error } = await supabase.functions.invoke('send-whatsapp', {
         body: {
           school_name: data.school_name,
           po_number: data.po_number,
@@ -107,8 +108,10 @@ const Generator = () => {
           code: data.code
         }
       });
-    } catch (err) {
+      if (error) throw error;
+    } catch (err: any) {
       console.error("[Generator] Gagal mengirim notifikasi WhatsApp:", err);
+      throw err;
     }
   };
 
@@ -156,11 +159,11 @@ const Generator = () => {
         description: "Data transaksi disimpan.",
       });
 
-      // Kirim Notifikasi WhatsApp
+      // Kirim Notifikasi WhatsApp dengan toast promise
       toast.promise(sendWhatsAppNotification(transactionData), {
         loading: 'Mengirim notifikasi WhatsApp...',
         success: 'Notifikasi WhatsApp terkirim!',
-        error: 'Gagal mengirim notifikasi WhatsApp',
+        error: (err) => `Gagal kirim WA: ${err.message || 'Cek koneksi/API Key'}`
       });
 
       // Reset Form
