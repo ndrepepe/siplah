@@ -10,8 +10,7 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  AreaChart, 
-  Area
+  Cell
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TrendingUp, DollarSign, PieChart, Activity, Calendar, X } from "lucide-react";
@@ -83,17 +82,14 @@ const Dashboard = () => {
   };
 
   const processData = () => {
-    // If no months selected, use all 12 months
     const activeMonths = selectedMonths.length > 0 
       ? selectedMonths 
       : Array.from({ length: 12 }, (_, i) => i.toString());
 
-    // If no years selected, use current year
     const activeYears = selectedYears.length > 0
       ? selectedYears
       : [getYear(now).toString()];
 
-    // 1. Filter transactions for active months in the selected years
     const filteredTransactions = allTransactions.filter(t => {
       const date = parseISO(t.created_at);
       const yearMatch = activeYears.includes(getYear(date).toString());
@@ -118,7 +114,6 @@ const Dashboard = () => {
       avgBM: totalAmount > 0 ? (totalBM / totalAmount) * 100 : 0
     });
 
-    // 2. Process chart data: Show the active months across selected years (sorted)
     const sortedYears = [...activeYears].sort((a, b) => parseInt(a) - parseInt(b));
     const sortedMonthIndices = [...activeMonths].map(Number).sort((a, b) => a - b);
     
@@ -181,12 +176,6 @@ const Dashboard = () => {
     : selectedMonths.length === 1 
       ? months[parseInt(selectedMonths[0])]
       : `${selectedMonths.length} Bulan`;
-
-  const selectedYearsLabel = selectedYears.length === 0
-    ? "Semua Tahun"
-    : selectedYears.length === 1
-      ? selectedYears[0]
-      : `${selectedYears.length} Tahun`;
 
   return (
     <div className="space-y-8">
@@ -285,13 +274,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="h-[350px] pt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#640D5F" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#640D5F" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis 
                   dataKey="name" 
@@ -308,17 +291,16 @@ const Dashboard = () => {
                 />
                 <Tooltip 
                   contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  cursor={{ fill: '#f8fafc' }}
                   formatter={(value: number) => [formatCurrency(value), 'Total Transaksi']}
                 />
-                <Area 
-                  type="monotone" 
+                <Bar 
                   dataKey="total" 
-                  stroke="#640D5F" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorTotal)" 
+                  fill="#640D5F" 
+                  radius={[6, 6, 0, 0]} 
+                  barSize={40}
                 />
-              </AreaChart>
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
