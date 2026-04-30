@@ -40,25 +40,25 @@ import EditTransactionDialog from "@/components/EditTransactionDialog";
 import AttachmentDialog from "@/components/AttachmentDialog";
 
 const TransactionList = () => {
-  // Helper to get current month range
-  const getCurrentMonthRange = () => {
+  // Helper to get last 30 days range including today
+  const getLast30DaysRange = () => {
     const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 29); // 30 days including today
     
     return {
-      start: firstDay.toISOString().split('T')[0],
-      end: lastDay.toISOString().split('T')[0]
+      start: thirtyDaysAgo.toISOString().split('T')[0],
+      end: now.toISOString().split('T')[0]
     };
   };
 
-  const monthRange = getCurrentMonthRange();
+  const defaultRange = getLast30DaysRange();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [printFilter, setPrintFilter] = useState<string>("all");
-  const [startDate, setStartDate] = useState<string>(monthRange.start);
-  const [endDate, setEndDate] = useState<string>(monthRange.end);
+  const [startDate, setStartDate] = useState<string>(defaultRange.start);
+  const [endDate, setEndDate] = useState<string>(defaultRange.end);
 
   // State for Edit
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
@@ -249,7 +249,7 @@ const TransactionList = () => {
   };
 
   const resetDateFilters = () => {
-    const range = getCurrentMonthRange();
+    const range = getLast30DaysRange();
     setStartDate(range.start);
     setEndDate(range.end);
   };
@@ -266,7 +266,7 @@ const TransactionList = () => {
           <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
             {startDate && endDate 
-              ? `Menampilkan data periode ${new Date(startDate).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`
+              ? `Menampilkan data periode ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`
               : "Menampilkan semua data transaksi"}
           </p>
         </div>
@@ -335,7 +335,7 @@ const TransactionList = () => {
                       variant="ghost" 
                       size="icon" 
                       onClick={resetDateFilters}
-                      title="Reset ke bulan ini"
+                      title="Reset ke 30 hari terakhir"
                       className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-50 shrink-0"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
