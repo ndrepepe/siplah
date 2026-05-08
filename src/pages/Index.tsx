@@ -22,8 +22,8 @@ const Index = () => {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#640D5F]/10 via-[#B12C00]/5 to-[#FFCC00]/10 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#640D5F]/10 via-[#B12C00]/5 to-[#FFCC00]/10 p-4 md:p-8 overflow-y-auto">
+      <div className="max-w-6xl mx-auto w-full">
         <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white/90 p-6 rounded-3xl shadow-xl shadow-[#640D5F]/5 border border-[#640D5F]/10 backdrop-blur-md">
           <div className="text-center md:text-left flex items-center gap-4">
             <div className="bg-primary p-3 rounded-2xl text-white shadow-lg shadow-primary/30">
