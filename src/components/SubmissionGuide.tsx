@@ -24,16 +24,16 @@ const SubmissionGuide = () => {
   const steps: Step[] = [
     {
       number: "1",
-      title: "Telepon Mas Salmon",
+      title: "Telepon Tim SIPLAH",
       actor: "Cabang",
-      description: "Cabang Menelepon Mas Salmon untuk menginformasikan Data Transaksi.",
+      description: "Cabang Menelepon Tim SIPLAH untuk menginformasikan Data Transaksi.",
       icon: PhoneCall,
       color: "bg-blue-500",
       textColor: "text-blue-500",
       borderColor: "border-blue-100",
       bgColor: "bg-blue-50/50",
       detailInfo: [
-        "Pastikan nomor telepon Mas Salmon dalam keadaan aktif.",
+        "Pastikan nomor telepon Tim SIPLAH dalam keadaan aktif.",
         "Sampaikan maksud koordinasi transaksi dengan jelas.",
         "Siapkan data-data awal transaksi sebelum melakukan panggilan."
       ]
@@ -41,15 +41,15 @@ const SubmissionGuide = () => {
     {
       number: "2",
       title: "Input ke Aplikasi",
-      actor: "Mas Salmon",
-      description: "Mas Salmon menginputkan data transaksi secara lengkap dan benar ke dalam aplikasi Grand Line Manager.",
+      actor: "Tim SIPLAH",
+      description: "Tim SIPLAH menginputkan data transaksi secara lengkap dan benar ke dalam aplikasi Grand Line Manager.",
       icon: FileInput,
       color: "bg-purple-500",
       textColor: "text-purple-500",
       borderColor: "border-purple-100",
       bgColor: "bg-purple-50/50",
       detailInfo: [
-        "Mas Salmon membuka menu Input Transaksi.",
+        "Tim SIPLAH membuka menu Input Transaksi.",
         "Memasukkan detail nominal, nomor PO, dan keterangan cabang.",
         "Memastikan seluruh data valid sebelum disimpan ke sistem."
       ]
