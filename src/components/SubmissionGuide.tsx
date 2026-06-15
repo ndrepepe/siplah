@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PhoneCall, FileInput, ShieldCheck, Printer, ArrowRight, ArrowDown, HelpCircle, Info } from "lucide-react";
+import { PhoneCall, FileInput, ShieldCheck, Printer, ArrowRight, ArrowDown, HelpCircle } from "lucide-react";
 
 const SubmissionGuide = () => {
   const steps = [
@@ -112,19 +112,6 @@ const SubmissionGuide = () => {
                 )}
               </React.Fragment>
             ))}
-          </div>
-
-          {/* Catatan Tambahan */}
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4">
-            <Info className="w-6 h-6 text-blue-500 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h5 className="font-bold text-blue-900 text-sm">Catatan Penting untuk Cabang:</h5>
-              <ul className="text-xs text-blue-700 list-disc list-inside space-y-1">
-                <li>Pastikan nomor telepon Mas Salmon aktif sebelum melakukan panggilan koordinasi.</li>
-                <li>Periksa kembali nominal transaksi dan nomor PO sebelum menekan tombol simpan di aplikasi.</li>
-                <li>Status transaksi yang sudah di-print tidak dapat diubah atau dihapus kembali secara mandiri.</li>
-              </ul>
-            </div>
           </div>
 
         </CardContent>
