@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { PhoneCall, FileInput, ShieldCheck, Printer, ArrowRight, ArrowDown, HelpCircle, X } from "lucide-react";
+import { PhoneCall, FileInput, ShieldCheck, Printer, ArrowRight, ArrowDown, HelpCircle } from "lucide-react";
 
 interface Step {
   number: string;
@@ -26,7 +26,7 @@ const SubmissionGuide = () => {
       number: "1",
       title: "Telepon Mas Salmon",
       actor: "Cabang",
-      description: "Cabang melakukan koordinasi awal dengan menelepon Mas Salmon sebelum melakukan input data.",
+      description: "Cabang Menelepon Mas Salmon untuk menginformasikan Data Transaksi.",
       icon: PhoneCall,
       color: "bg-blue-500",
       textColor: "text-blue-500",
