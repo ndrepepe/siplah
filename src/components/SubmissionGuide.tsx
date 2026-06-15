@@ -160,9 +160,9 @@ const SubmissionGuide = () => {
         </CardContent>
       </Card>
 
-      {/* Popup Modal Detail Langkah dengan Animasi */}
+      {/* Popup Modal Detail Langkah dengan Animasi Lebih Lambat & Jelas */}
       <Dialog open={selectedStep !== null} onOpenChange={(open) => !open && setSelectedStep(null)}>
-        <DialogContent className="sm:max-w-md rounded-3xl p-6 border-primary/10 bg-white/95 backdrop-blur-md transition-all duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4">
+        <DialogContent className="sm:max-w-md rounded-3xl p-6 border-primary/10 bg-white/95 backdrop-blur-md transition-all duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-90 data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-from-bottom-12 data-[state=closed]:slide-out-to-bottom-8">
           {selectedStep && (
             <div className="space-y-6">
               <DialogHeader className="flex flex-col items-center text-center space-y-3">
