@@ -20,8 +20,8 @@ const SubmissionGuide = () => {
     {
       number: "2",
       title: "Input ke Aplikasi",
-      actor: "Cabang",
-      description: "Cabang menginputkan data transaksi secara lengkap dan benar ke dalam aplikasi Grand Line Manager.",
+      actor: "Mas Salmon",
+      description: "Mas Salmon menginputkan data transaksi secara lengkap dan benar ke dalam aplikasi Grand Line Manager.",
       icon: FileInput,
       color: "bg-purple-500",
       textColor: "text-purple-500",
