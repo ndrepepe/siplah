@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PhoneCall, FileInput, ShieldCheck, Printer, ArrowRight, ArrowDown, HelpCircle } from "lucide-react";
 
 interface Step {
@@ -160,9 +160,9 @@ const SubmissionGuide = () => {
         </CardContent>
       </Card>
 
-      {/* Popup Modal Detail Langkah */}
+      {/* Popup Modal Detail Langkah dengan Animasi */}
       <Dialog open={selectedStep !== null} onOpenChange={(open) => !open && setSelectedStep(null)}>
-        <DialogContent className="sm:max-w-md rounded-3xl p-6 border-primary/10 bg-white/95 backdrop-blur-md">
+        <DialogContent className="sm:max-w-md rounded-3xl p-6 border-primary/10 bg-white/95 backdrop-blur-md transition-all duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-from-bottom-4 data-[state=closed]:slide-out-to-bottom-4">
           {selectedStep && (
             <div className="space-y-6">
               <DialogHeader className="flex flex-col items-center text-center space-y-3">
