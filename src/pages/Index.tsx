@@ -62,25 +62,33 @@ const Index = () => {
           </div>
           
           <div className="flex flex-wrap items-center gap-4">
-            {/* Role Switcher */}
-            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-              <span className="text-xs font-bold text-slate-500 px-2 uppercase flex items-center gap-1">
-                <ShieldAlert className="w-3.5 h-3.5 text-primary" /> Role:
-              </span>
-              <Select value={role} onValueChange={handleRoleChange}>
-                <SelectTrigger className="w-[130px] h-9 rounded-xl border-none bg-white shadow-sm font-bold text-xs text-primary">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="STAFF" className="text-xs font-bold">STAFF (Input)</SelectItem>
-                  <SelectItem value="MANAGER" className="text-xs font-bold">MANAGER</SelectItem>
-                  <SelectItem value="DIREKTUR" className="text-xs font-bold">DIREKTUR</SelectItem>
-                  {isSuperAdmin && (
+            {/* Role Switcher - Hanya interaktif untuk Super Admin */}
+            {isSuperAdmin ? (
+              <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                <span className="text-xs font-bold text-slate-500 px-2 uppercase flex items-center gap-1">
+                  <ShieldAlert className="w-3.5 h-3.5 text-primary" /> Role:
+                </span>
+                <Select value={role} onValueChange={handleRoleChange}>
+                  <SelectTrigger className="w-[130px] h-9 rounded-xl border-none bg-white shadow-sm font-bold text-xs text-primary">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="STAFF" className="text-xs font-bold">STAFF (Input)</SelectItem>
+                    <SelectItem value="MANAGER" className="text-xs font-bold">MANAGER</SelectItem>
+                    <SelectItem value="DIREKTUR" className="text-xs font-bold">DIREKTUR</SelectItem>
                     <SelectItem value="SUPER_ADMIN" className="text-xs font-bold">SUPER ADMIN</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-2xl border border-slate-200">
+                <ShieldAlert className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-bold text-slate-500 uppercase">Role:</span>
+                <span className="text-xs font-bold text-primary bg-white px-2.5 py-1 rounded-xl shadow-sm border border-slate-100">
+                  {role}
+                </span>
+              </div>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
