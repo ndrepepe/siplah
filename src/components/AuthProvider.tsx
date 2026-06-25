@@ -26,7 +26,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
-        setRole(currentUser.user_metadata?.role || "STAFF");
+        const isSuperAdmin = currentUser.email?.toLowerCase() === "salmon@pepenio.my.id";
+        setRole(isSuperAdmin ? "SUPER_ADMIN" : (currentUser.user_metadata?.role || "STAFF"));
       }
       setLoading(false);
     });
@@ -37,7 +38,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
-        setRole(currentUser.user_metadata?.role || "STAFF");
+        const isSuperAdmin = currentUser.email?.toLowerCase() === "salmon@pepenio.my.id";
+        setRole(isSuperAdmin ? "SUPER_ADMIN" : (currentUser.user_metadata?.role || "STAFF"));
       }
       setLoading(false);
     });

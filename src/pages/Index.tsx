@@ -6,8 +6,9 @@ import TransactionList from "./TransactionList";
 import Dashboard from "./Dashboard";
 import BulkImport from "@/components/BulkImport";
 import SubmissionGuide from "@/components/SubmissionGuide";
+import UserManagement from "@/components/UserManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet, HelpCircle, ShieldAlert } from "lucide-react";
+import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet, HelpCircle, ShieldAlert, Users } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ import {
 
 const Index = () => {
   const { user, role, updateRole, signOut } = useAuth();
+  const isSuperAdmin = user?.email?.toLowerCase() === "salmon@pepenio.my.id";
 
   const handleRoleChange = async (newRole: string) => {
     try {
@@ -69,6 +71,9 @@ const Index = () => {
                   <SelectItem value="STAFF" className="text-xs font-bold">STAFF (Input)</SelectItem>
                   <SelectItem value="MANAGER" className="text-xs font-bold">MANAGER</SelectItem>
                   <SelectItem value="DIREKTUR" className="text-xs font-bold">DIREKTUR</SelectItem>
+                  {isSuperAdmin && (
+                    <SelectItem value="SUPER_ADMIN" className="text-xs font-bold">SUPER ADMIN</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -94,7 +99,7 @@ const Index = () => {
 
         <Tabs defaultValue="dashboard" className="w-full">
           <div className="flex justify-center mb-8">
-            <TabsList className="grid w-full max-w-3xl grid-cols-5 h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10">
+            <TabsList className={`grid w-full max-w-4xl ${isSuperAdmin ? 'grid-cols-6' : 'grid-cols-5'} h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10`}>
               <TabsTrigger 
                 value="dashboard" 
                 className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
@@ -130,6 +135,15 @@ const Index = () => {
                 <HelpCircle className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Petunjuk</span>
               </TabsTrigger>
+              {isSuperAdmin && (
+                <TabsTrigger 
+                  value="users" 
+                  className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
+                >
+                  <Users className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Kelola User</span>
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -152,6 +166,12 @@ const Index = () => {
           <TabsContent value="guide" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <SubmissionGuide />
           </TabsContent>
+
+          {isSuperAdmin && (
+            <TabsContent value="users" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <UserManagement />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
       <MadeWithDyad />
