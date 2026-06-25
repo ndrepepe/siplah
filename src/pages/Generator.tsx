@@ -87,6 +87,18 @@ const Generator = () => {
     fetchApprovers();
   }, []);
 
+  // Reset email pilihan jika tipe approval berubah
+  useEffect(() => {
+    if (approvalType === "NONE") {
+      setAssignedManagerEmail("");
+      setAssignedDirectorEmail("");
+    } else if (approvalType === "MANAGER") {
+      setAssignedDirectorEmail("");
+    } else if (approvalType === "DIREKTUR") {
+      setAssignedManagerEmail("");
+    }
+  }, [approvalType]);
+
   const generateCode = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let result = "";
