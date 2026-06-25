@@ -135,10 +135,12 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           bank_name: formData.bank_name,
           account_number: formData.account_number,
           account_owner: formData.account_owner,
-          status: formData.status,
+          status: formData.approval_type === "NONE" ? "DISETUJUI" : formData.status,
           approval_type: formData.approval_type,
-          assigned_manager_email: formData.assigned_manager_email || null,
-          assigned_director_email: formData.assigned_director_email || null
+          assigned_manager_email: (formData.approval_type === "MANAGER" || formData.approval_type === "BOTH") ? formData.assigned_manager_email || null : null,
+          assigned_director_email: (formData.approval_type === "DIREKTUR" || formData.approval_type === "BOTH") ? formData.assigned_director_email || null : null,
+          manager_approved: formData.approval_type === "NONE" || formData.approval_type === "DIREKTUR" || formData.manager_approved,
+          director_approved: formData.approval_type === "NONE" || formData.approval_type === "MANAGER" || formData.director_approved
         })
         .eq("id", transaction.id);
 
@@ -154,7 +156,7 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
     }
   };
 
-  const splitTotal = bmSplits.reduce((sum, split) => sum + (parseFloat(split.amount) || 0), 0);
+  const splitTotal = bmSplits.reduce((sum, split) => sum + (parseFloat(formData.transaction_amount) || 0), 0);
   const remainingAmount = (parseFloat(formData.transaction_amount) || 0) - splitTotal;
 
   return (
@@ -242,6 +244,7 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="NONE">Tidak Perlu Approval</SelectItem>
                     <SelectItem value="MANAGER">Hanya Manager</SelectItem>
                     <SelectItem value="DIREKTUR">Hanya Direktur</SelectItem>
                     <SelectItem value="BOTH">Manager & Direktur</SelectItem>

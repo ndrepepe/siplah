@@ -158,13 +158,13 @@ const Generator = () => {
       bank_name: bankName,
       account_number: accountNumber,
       account_owner: accountOwner,
-      status: status,
+      status: approvalType === "NONE" ? "DISETUJUI" : status,
       code: generatedCode,
       approval_type: approvalType,
-      assigned_manager_email: assignedManagerEmail || null,
-      assigned_director_email: assignedDirectorEmail || null,
-      manager_approved: false,
-      director_approved: false
+      assigned_manager_email: (approvalType === "MANAGER" || approvalType === "BOTH") ? assignedManagerEmail || null : null,
+      assigned_director_email: (approvalType === "DIREKTUR" || approvalType === "BOTH") ? assignedDirectorEmail || null : null,
+      manager_approved: approvalType === "NONE" || approvalType === "DIREKTUR",
+      director_approved: approvalType === "NONE" || approvalType === "MANAGER"
     };
 
     try {
@@ -310,6 +310,7 @@ const Generator = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="NONE">Tidak Perlu Approval</SelectItem>
                       <SelectItem value="MANAGER">Hanya Manager</SelectItem>
                       <SelectItem value="DIREKTUR">Hanya Direktur</SelectItem>
                       <SelectItem value="BOTH">Manager & Direktur</SelectItem>
