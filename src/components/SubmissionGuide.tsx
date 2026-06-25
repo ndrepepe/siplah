@@ -56,22 +56,6 @@ const SubmissionGuide = () => {
     },
     {
       number: "3",
-      title: "Approval Manager / Direktur",
-      actor: "Manager / Direktur",
-      description: "Manager dan/atau Direktur memeriksa rincian pengajuan transaksi dan memberikan persetujuan (approval) melalui sistem.",
-      icon: UserCheck,
-      color: "bg-orange-500",
-      textColor: "text-orange-500",
-      borderColor: "border-orange-100",
-      bgColor: "bg-orange-50/50",
-      detailInfo: [
-        "Manager/Direktur menerima notifikasi atau melihat daftar transaksi yang ditugaskan.",
-        "Melakukan review rincian nominal, % BM, dan alasan pengajuan.",
-        "Klik tombol 'Approve' untuk menyetujui pengajuan transaksi."
-      ]
-    },
-    {
-      number: "4",
       title: "Konfirmasi Accounting",
       actor: "Accounting",
       description: "Pihak Accounting akan melakukan telepon konfirmasi balik ke Cabang untuk verifikasi data.",
@@ -84,6 +68,22 @@ const SubmissionGuide = () => {
         "Accounting memeriksa data transaksi yang masuk di sistem.",
         "Melakukan panggilan telepon ke Cabang terkait untuk verifikasi kecocokan data.",
         "Menyetujui (approve) transaksi setelah konfirmasi berhasil."
+      ]
+    },
+    {
+      number: "4",
+      title: "Approval Manager / Direktur",
+      actor: "Manager / Direktur",
+      description: "Manager dan/atau Direktur memeriksa rincian pengajuan transaksi dan memberikan persetujuan (approval) melalui sistem.",
+      icon: UserCheck,
+      color: "bg-orange-500",
+      textColor: "text-orange-500",
+      borderColor: "border-orange-100",
+      bgColor: "bg-orange-50/50",
+      detailInfo: [
+        "Manager/Direktur menerima notifikasi atau melihat daftar transaksi yang ditugaskan.",
+        "Melakukan review rincian nominal, % BM, dan alasan pengajuan.",
+        "Klik tombol 'Approve' untuk menyetujui pengajuan transaksi."
       ]
     },
     {
