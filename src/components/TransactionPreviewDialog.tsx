@@ -65,12 +65,17 @@ const TransactionPreviewDialog = ({
       if (role === "MANAGER") {
         updates.manager_approved = true;
         updates.manager_approval_date = nowStr;
-        updates.manager_notes = approvalNotes; // Menyimpan catatan persetujuan manager
       } else if (role === "DIREKTUR") {
         updates.director_approved = true;
         updates.director_approval_date = nowStr;
-        updates.director_notes = approvalNotes; // Menyimpan catatan persetujuan direktur
       }
+
+      // Simpan catatan persetujuan ke dalam kolom reason_for_approval yang sudah ada di database
+      const currentReason = transaction.reason_for_approval || "";
+      const notePrefix = role === "MANAGER" ? "[Catatan Manager]: " : "[Catatan Direktur]: ";
+      updates.reason_for_approval = currentReason 
+        ? `${currentReason}\n${notePrefix}${approvalNotes}`
+        : `${notePrefix}${approvalNotes}`;
 
       // Cek apakah semua approval yang dibutuhkan sudah terpenuhi
       const willBeManagerApproved = role === "MANAGER" ? true : transaction.manager_approved;
@@ -214,7 +219,7 @@ const TransactionPreviewDialog = ({
           {transaction.reason_for_approval && (
             <div className="space-y-2 p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
               <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Alasan Membutuhkan Approval</h4>
-              <p className="text-xs text-amber-900 leading-relaxed">{transaction.reason_for_approval}</p>
+              <p className="text-xs text-amber-900 leading-relaxed whitespace-pre-line">{transaction.reason_for_approval}</p>
             </div>
           )}
 
