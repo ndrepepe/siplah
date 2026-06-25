@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +50,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
         bm_percentage: transaction.bm_percentage?.toString() || "",
         approval_type: transaction.approval_type || "BOTH",
         assigned_manager_email: transaction.assigned_manager_email || "",
-        assigned_director_email: transaction.assigned_director_email || ""
+        assigned_director_email: transaction.assigned_director_email || "",
+        reason_for_approval: transaction.reason_for_approval || ""
       });
       
       if (transaction.bm_splits && Array.isArray(transaction.bm_splits)) {
@@ -140,7 +142,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           assigned_manager_email: (formData.approval_type === "MANAGER" || formData.approval_type === "BOTH") ? formData.assigned_manager_email || null : null,
           assigned_director_email: (formData.approval_type === "DIREKTUR" || formData.approval_type === "BOTH") ? formData.assigned_director_email || null : null,
           manager_approved: formData.approval_type === "NONE" || formData.approval_type === "DIREKTUR" || formData.manager_approved,
-          director_approved: formData.approval_type === "NONE" || formData.approval_type === "MANAGER" || formData.director_approved
+          director_approved: formData.approval_type === "NONE" || formData.approval_type === "MANAGER" || formData.director_approved,
+          reason_for_approval: formData.approval_type === "NONE" ? null : formData.reason_for_approval || null
         })
         .eq("id", transaction.id);
 
@@ -278,6 +281,18 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
                 </div>
               )}
             </div>
+
+            {formData.approval_type !== "NONE" && (
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <Label>Keterangan Alasan Membutuhkan Approval</Label>
+                <Textarea
+                  value={formData.reason_for_approval || ""}
+                  onChange={(e) => setFormData({...formData, reason_for_approval: e.target.value})}
+                  placeholder="Tuliskan alasan mengapa transaksi ini memerlukan persetujuan..."
+                  className="bg-white min-h-[80px]"
+                />
+              </div>
+            )}
           </div>
 
           {/* BM Section */}
