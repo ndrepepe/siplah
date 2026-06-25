@@ -261,6 +261,13 @@ const TransactionList = () => {
     tableData.push(["Nomor Rekening", t.account_number || "-"]);
     tableData.push(["Pemilik Rekening", t.account_owner || "-"]);
 
+    // Tambahkan Alasan & Catatan Approval jika ada
+    if (t.reason_for_approval) {
+      tableData.push(["", ""]);
+      tableData.push(["ALASAN & CATATAN APPROVAL", ""]);
+      tableData.push(["Detail", t.reason_for_approval]);
+    }
+
     autoTable(doc, {
       startY: 35,
       body: tableData,
@@ -276,7 +283,7 @@ const TransactionList = () => {
       },
       didParseCell: function(data) {
         const label = data.row.raw[0];
-        if (label === "INFORMASI PEMBAYARAN BM" || label === "RINCIAN % BM") {
+        if (label === "INFORMASI PEMBAYARAN BM" || label === "RINCIAN % BM" || label === "ALASAN & CATATAN APPROVAL") {
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.fillColor = [241, 245, 249];
           data.cell.styles.textColor = [30, 41, 59];
