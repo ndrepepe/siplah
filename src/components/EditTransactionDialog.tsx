@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +42,7 @@ interface EditTransactionDialogProps {
 }
 
 const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: EditTransactionDialogProps) => {
+  const { role } = useAuth();
   const [formData, setFormData] = useState<any>({});
   const [bmType, setBmType] = useState<"single" | "multiple">("single");
   const [bmSplits, setBmSplits] = useState<BMSplit[]>([{ amount: "", percentage: "" }]);
@@ -277,94 +279,96 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           </div>
 
           {/* Approval Configuration Section */}
-          <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-            <Label className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-primary" />
-              Konfigurasi Approval Pengajuan
-            </Label>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Dibutuhkan Approval Dari</Label>
-                <Select 
-                  value={formData.approval_type || "BOTH"} 
-                  onValueChange={(val) => setFormData({...formData, approval_type: val})}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">Tidak Perlu Approval</SelectItem>
-                    <SelectItem value="MANAGER">Hanya Manager</SelectItem>
-                    <SelectItem value="DIREKTUR">Hanya Direktur</SelectItem>
-                    <SelectItem value="BOTH">Manager & Direktur</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {(formData.approval_type === "MANAGER" || formData.approval_type === "BOTH") && (
-                <div className="space-y-2 animate-in fade-in duration-200">
-                  <Label>Email Manager Penanggung Jawab</Label>
+          {role !== "STAFF" && (
+            <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <Label className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                Konfigurasi Approval Pengajuan
+              </Label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Dibutuhkan Approval Dari</Label>
                   <Select 
-                    value={formData.assigned_manager_email || ""} 
-                    onValueChange={(val) => setFormData({...formData, assigned_manager_email: val})}
+                    value={formData.approval_type || "BOTH"} 
+                    onValueChange={(val) => setFormData({...formData, approval_type: val})}
                   >
                     <SelectTrigger className="bg-white">
-                      <SelectValue placeholder="Pilih Manager" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {managers.length === 0 ? (
-                        <SelectItem value="no-manager" disabled>Tidak ada manager tersedia</SelectItem>
-                      ) : (
-                        managers.map((m) => (
-                          <SelectItem key={m.email} value={m.email}>
-                            {m.email}
-                          </SelectItem>
-                        ))
-                      )}
+                      <SelectItem value="NONE">Tidak Perlu Approval</SelectItem>
+                      <SelectItem value="MANAGER">Hanya Manager</SelectItem>
+                      <SelectItem value="DIREKTUR">Hanya Direktur</SelectItem>
+                      <SelectItem value="BOTH">Manager & Direktur</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
-              {(formData.approval_type === "DIREKTUR" || formData.approval_type === "BOTH") && (
-                <div className="space-y-2 animate-in fade-in duration-200">
-                  <Label>Email Direktur Penanggung Jawab</Label>
-                  <Select 
-                    value={formData.assigned_director_email || ""} 
-                    onValueChange={(val) => setFormData({...formData, assigned_director_email: val})}
-                  >
-                    <SelectTrigger className="bg-white">
-                      <SelectValue placeholder="Pilih Direktur" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {directors.length === 0 ? (
-                        <SelectItem value="no-director" disabled>Tidak ada direktur tersedia</SelectItem>
-                      ) : (
-                        directors.map((d) => (
-                          <SelectItem key={d.email} value={d.email}>
-                            {d.email}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                {(formData.approval_type === "MANAGER" || formData.approval_type === "BOTH") && (
+                  <div className="space-y-2 animate-in fade-in duration-200">
+                    <Label>Email Manager Penanggung Jawab</Label>
+                    <Select 
+                      value={formData.assigned_manager_email || ""} 
+                      onValueChange={(val) => setFormData({...formData, assigned_manager_email: val})}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Pilih Manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {managers.length === 0 ? (
+                          <SelectItem value="no-manager" disabled>Tidak ada manager tersedia</SelectItem>
+                        ) : (
+                          managers.map((m) => (
+                            <SelectItem key={m.email} value={m.email}>
+                              {m.email}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {(formData.approval_type === "DIREKTUR" || formData.approval_type === "BOTH") && (
+                  <div className="space-y-2 animate-in fade-in duration-200">
+                    <Label>Email Direktur Penanggung Jawab</Label>
+                    <Select 
+                      value={formData.assigned_director_email || ""} 
+                      onValueChange={(val) => setFormData({...formData, assigned_director_email: val})}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Pilih Direktur" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {directors.length === 0 ? (
+                          <SelectItem value="no-director" disabled>Tidak ada direktur tersedia</SelectItem>
+                        ) : (
+                          directors.map((d) => (
+                            <SelectItem key={d.email} value={d.email}>
+                              {d.email}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              {formData.approval_type !== "NONE" && (
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <Label>Keterangan Alasan Membutuhkan Approval</Label>
+                  <Textarea
+                    value={formData.reason_for_approval || ""}
+                    onChange={(e) => setFormData({...formData, reason_for_approval: e.target.value})}
+                    placeholder="Tuliskan alasan mengapa transaksi ini memerlukan persetujuan..."
+                    className="bg-white min-h-[80px]"
+                  />
                 </div>
               )}
             </div>
-
-            {formData.approval_type !== "NONE" && (
-              <div className="space-y-2 pt-2 border-t border-slate-200">
-                <Label>Keterangan Alasan Membutuhkan Approval</Label>
-                <Textarea
-                  value={formData.reason_for_approval || ""}
-                  onChange={(e) => setFormData({...formData, reason_for_approval: e.target.value})}
-                  placeholder="Tuliskan alasan mengapa transaksi ini memerlukan persetujuan..."
-                  className="bg-white min-h-[80px]"
-                />
-              </div>
-            )}
-          </div>
+          )}
 
           {/* BM Section */}
           <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
