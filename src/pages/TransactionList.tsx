@@ -42,6 +42,7 @@ import AttachmentDialog from "@/components/AttachmentDialog";
 
 const TransactionList = () => {
   const { user, role } = useAuth();
+  const isSuperAdmin = role === "SUPER_ADMIN" || user?.email?.toLowerCase() === "salmon@pepenio.my.id";
 
   // Helper to get last 30 days range including today
   const getLast30DaysRange = () => {
@@ -578,7 +579,7 @@ const TransactionList = () => {
                     <TableCell className="px-2">
                       <div className="flex items-center justify-center gap-0.5">
                         {/* Tombol Approval untuk Manager / Direktur */}
-                        {role !== "STAFF" && (
+                        {(role === "MANAGER" || role === "DIREKTUR") && (
                           <Button
                             variant="default"
                             size="sm"
@@ -590,7 +591,42 @@ const TransactionList = () => {
                           </Button>
                         )}
 
+                        {/* Tombol untuk Staff */}
                         {role === "STAFF" && (
+                          <>
+                            {!t.is_printed && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  onClick={() => {
+                                    setEditingTransaction(t);
+                                    setIsEditDialogOpen(true);
+                                  }}
+                                  title="Edit"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    setDeletingId(t.id);
+                                    setIsDeleteDialogOpen(true);
+                                  }}
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        )}
+
+                        {/* Tombol untuk Super Admin */}
+                        {isSuperAdmin && (
                           <>
                             <Button
                               variant="ghost"
