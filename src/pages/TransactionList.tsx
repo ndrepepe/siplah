@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar, Paperclip, Image as ImageIcon, ThumbsUp, ShieldAlert } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar, Paperclip, Image as ImageIcon, ThumbsUp, ShieldAlert, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import EditTransactionDialog from "@/components/EditTransactionDialog";
 import AttachmentDialog from "@/components/AttachmentDialog";
+import TransactionPreviewDialog from "@/components/TransactionPreviewDialog";
 
 const TransactionList = () => {
   const { user, role } = useAuth();
@@ -75,6 +76,10 @@ const TransactionList = () => {
   // State for Attachment
   const [attachmentTransaction, setAttachmentTransaction] = useState<any>(null);
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
+
+  // State for Preview
+  const [previewTransaction, setPreviewTransaction] = useState<any>(null);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -599,18 +604,32 @@ const TransactionList = () => {
                       </div>
                     </TableCell>
                     <TableCell className="px-2">
-                      <div className="flex items-center justify-center gap-0.5">
-                        {/* Tombol Approval untuk Manager / Direktur */}
+                      <div className="flex items-center justify-center gap-1">
+                        {/* Tombol Approval & Preview untuk Manager / Direktur */}
                         {(role === "MANAGER" || role === "DIREKTUR") && (
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="h-7 px-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg flex items-center gap-1"
-                            onClick={() => handleApprove(t)}
-                            title="Setujui Transaksi"
-                          >
-                            <ThumbsUp className="w-3 h-3" /> Approve
-                          </Button>
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2 text-xs font-medium rounded-lg flex items-center gap-1 border-slate-200 hover:bg-slate-50"
+                              onClick={() => {
+                                setPreviewTransaction(t);
+                                setIsPreviewDialogOpen(true);
+                              }}
+                              title="Preview Pengajuan"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-slate-500" /> Preview
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="h-7 px-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg flex items-center gap-1"
+                              onClick={() => handleApprove(t)}
+                              title="Setujui Transaksi"
+                            >
+                              <ThumbsUp className="w-3 h-3" /> Approve
+                            </Button>
+                          </>
                         )}
 
                         {/* Tombol untuk Staff */}
@@ -728,6 +747,12 @@ const TransactionList = () => {
         open={isAttachmentDialogOpen}
         onOpenChange={setIsAttachmentDialogOpen}
         onSuccess={fetchTransactions}
+      />
+
+      <TransactionPreviewDialog
+        transaction={previewTransaction}
+        open={isPreviewDialogOpen}
+        onOpenChange={setIsPreviewDialogOpen}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
