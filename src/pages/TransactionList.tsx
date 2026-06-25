@@ -512,16 +512,32 @@ const TransactionList = () => {
                       )}
                     </TableCell>
                     <TableCell className="px-2">
-                      <Badge
-                        variant={t.status === "DIBATALKAN" ? "destructive" : "outline"}
-                        className={cn(
-                          "text-[10px] px-1.5 py-0",
-                          t.status === "DIAJUKAN" && "bg-green-50 text-green-700 border-green-200",
-                          t.status === "DISETUJUI" && "bg-blue-50 text-blue-700 border-blue-200"
+                      <div className="flex flex-col gap-1 items-start">
+                        <Badge
+                          variant={t.status === "DIBATALKAN" ? "destructive" : "outline"}
+                          className={cn(
+                            "text-[10px] px-1.5 py-0",
+                            t.status === "DIAJUKAN" && "bg-green-50 text-green-700 border-green-200",
+                            t.status === "DISETUJUI" && "bg-blue-50 text-blue-700 border-blue-200"
+                          )}
+                        >
+                          {t.status || "DIAJUKAN"}
+                        </Badge>
+                        {t.status === "DISETUJUI" && (
+                          <div className="text-[9px] text-muted-foreground flex flex-col gap-0.5 mt-1 max-w-[140px] overflow-hidden">
+                            {t.manager_approved && t.assigned_manager_email && (
+                              <span className="truncate block" title={`Manager: ${t.assigned_manager_email}`}>
+                                M: {t.assigned_manager_email}
+                              </span>
+                            )}
+                            {t.director_approved && t.assigned_director_email && (
+                              <span className="truncate block" title={`Direktur: ${t.assigned_director_email}`}>
+                                D: {t.assigned_director_email}
+                              </span>
+                            )}
+                          </div>
                         )}
-                      >
-                        {t.status || "DIAJUKAN"}
-                      </Badge>
+                      </div>
                     </TableCell>
                     <TableCell className="px-2">
                       <div className="flex flex-col gap-1 text-[10px]">
