@@ -541,21 +541,27 @@ const TransactionList = () => {
                     </TableCell>
                     <TableCell className="px-2">
                       <div className="flex flex-col gap-1 text-[10px]">
-                        {(t.approval_type === "MANAGER" || t.approval_type === "BOTH") && (
-                          <div className="flex items-center gap-1">
-                            <span className="font-bold text-slate-500">M:</span>
-                            <Badge variant={t.manager_approved ? "default" : "outline"} className="text-[9px] px-1 py-0">
-                              {t.manager_approved ? "Approved" : "Pending"}
-                            </Badge>
-                          </div>
-                        )}
-                        {(t.approval_type === "DIREKTUR" || t.approval_type === "BOTH") && (
-                          <div className="flex items-center gap-1">
-                            <span className="font-bold text-slate-500">D:</span>
-                            <Badge variant={t.director_approved ? "default" : "outline"} className="text-[9px] px-1 py-0">
-                              {t.director_approved ? "Approved" : "Pending"}
-                            </Badge>
-                          </div>
+                        {(!t.approval_type || t.approval_type === "NONE") ? (
+                          <span className="text-muted-foreground italic text-[11px]">Tidak perlu persetujuan</span>
+                        ) : (
+                          <>
+                            {(t.approval_type === "MANAGER" || t.approval_type === "BOTH") && (
+                              <div className="flex items-center gap-1">
+                                <span className="font-bold text-slate-500">M:</span>
+                                <Badge variant={t.manager_approved ? "default" : "outline"} className="text-[9px] px-1 py-0">
+                                  {t.manager_approved ? "Approved" : "Pending"}
+                                </Badge>
+                              </div>
+                            )}
+                            {(t.approval_type === "DIREKTUR" || t.approval_type === "BOTH") && (
+                              <div className="flex items-center gap-1">
+                                <span className="font-bold text-slate-500">D:</span>
+                                <Badge variant={t.director_approved ? "default" : "outline"} className="text-[9px] px-1 py-0">
+                                  {t.director_approved ? "Approved" : "Pending"}
+                                </Badge>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </TableCell>
