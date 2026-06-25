@@ -44,9 +44,12 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('list_users_admin');
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: { action: 'list_users' }
+      });
+      
       if (error) throw error;
-      setUsers(data || []);
+      setUsers(data?.users || []);
     } catch (error: any) {
       toast.error("Gagal memuat daftar user: " + error.message);
     } finally {
@@ -67,10 +70,13 @@ const UserManagement = () => {
 
     setIsCreating(true);
     try {
-      const { error } = await supabase.rpc('create_user_admin', {
-        user_email: newEmail,
-        user_password: newPassword,
-        user_role: newRole
+      const { error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'create_user',
+          email: newEmail,
+          password: newPassword,
+          role: newRole
+        }
       });
 
       if (error) throw error;
@@ -89,9 +95,12 @@ const UserManagement = () => {
 
   const handleRoleChange = async (userId: string, role: string) => {
     try {
-      const { error } = await supabase.rpc('update_user_role_admin', {
-        target_user_id: userId,
-        new_role: role
+      const { error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'update_user_role',
+          userId: userId,
+          role: role
+        }
       });
 
       if (error) throw error;
@@ -111,9 +120,12 @@ const UserManagement = () => {
 
     setIsUpdatingPassword(true);
     try {
-      const { error } = await supabase.rpc('update_user_password_admin', {
-        target_user_id: selectedUser.id,
-        new_password: newPasswordForUser
+      const { error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'update_user_password',
+          userId: selectedUser.id,
+          password: newPasswordForUser
+        }
       });
 
       if (error) throw error;
@@ -133,8 +145,11 @@ const UserManagement = () => {
     if (!confirm(`Apakah Anda yakin ingin menghapus user ${email}?`)) return;
 
     try {
-      const { error } = await supabase.rpc('delete_user_admin', {
-        target_user_id: userId
+      const { error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          action: 'delete_user',
+          userId: userId
+        }
       });
 
       if (error) throw error;
@@ -241,7 +256,7 @@ const UserManagement = () => {
                   ) : (
                     users.map((u) => {
                       const isSelf = u.email?.toLowerCase() === 'salmon@pepenio.my.id';
-                      const currentRole = u.raw_user_meta_data?.role || 'STAFF';
+                      const currentRole = u.user_metadata?.role || 'STAFF';
 
                       return (
                         <TableRow key={u.id}>
