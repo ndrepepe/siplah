@@ -54,10 +54,6 @@ const Generator = () => {
   // List Approvers dari Database
   const [managers, setManagers] = useState<ApproverUser[]>([]);
   const [directors, setDirectors] = useState<ApproverUser[]>([]);
-  
-  // Fallback mode jika tidak ada data di database
-  const [useManualManager, setUseManualManager] = useState(false);
-  const [useManualDirector, setUseManualDirector] = useState(false);
 
   const { toast: showToast } = useToast();
 
@@ -65,47 +61,26 @@ const Generator = () => {
   useEffect(() => {
     const fetchApprovers = async () => {
       try {
-        console.log("Memulai fetch data profiles...");
         const { data, error } = await supabase
           .from("profiles")
           .select("email, role");
         
-        if (error) {
-          console.error("Error fetching profiles:", error);
-          throw error;
-        }
-
-        console.log("Data profiles yang berhasil diambil:", data);
+        if (error) throw error;
 
         if (data) {
           const mList = data
-            .filter((u: any) => u.role?.trim().toUpperCase() === "MANAGER")
-            .map((u: any) => ({ email: u.email }))
-            .filter((u: any) => u.email);
+            .filter((u: any) => u.role?.toUpperCase() === "MANAGER")
+            .map((u: any) => ({ email: u.email }));
           
           const dList = data
-            .filter((u: any) => u.role?.trim().toUpperCase() === "DIREKTUR" || u.role?.trim().toUpperCase() === "DIRECTOR")
-            .map((u: any) => ({ email: u.email }))
-            .filter((u: any) => u.email);
+            .filter((u: any) => u.role?.toUpperCase() === "DIREKTUR" || u.role?.toUpperCase() === "DIRECTOR")
+            .map((u: any) => ({ email: u.email }));
           
-          console.log("Filtered Managers:", mList);
-          console.log("Filtered Directors:", dList);
-
           setManagers(mList);
           setDirectors(dList);
-
-          // Jika data kosong, otomatis aktifkan input manual agar user tidak stuck
-          if (mList.length === 0) {
-            setUseManualManager(true);
-          }
-          if (dList.length === 0) {
-            setUseManualDirector(true);
-          }
         }
       } catch (err) {
         console.error("Gagal mengambil data profiles:", err);
-        setUseManualManager(true);
-        setUseManualDirector(true);
       }
     };
 
@@ -383,83 +358,45 @@ const Generator = () => {
 
                 {(approvalType === "MANAGER" || approvalType === "BOTH") && (
                   <div className="space-y-2 animate-in fade-in duration-200">
-                    <div className="flex justify-between items-center">
-                      <Label>Email Manager</Label>
-                      <button
-                        type="button"
-                        onClick={() => setUseManualManager(!useManualManager)}
-                        className="text-[10px] text-primary underline hover:text-primary/80"
-                      >
-                        {useManualManager ? "Gunakan Dropdown" : "Ketik Manual"}
-                      </button>
-                    </div>
-                    {useManualManager ? (
-                      <Input
-                        type="email"
-                        value={assignedManagerEmail}
-                        onChange={(e) => setAssignedManagerEmail(e.target.value)}
-                        placeholder="Ketik email manager..."
-                        className="bg-white"
-                      />
-                    ) : (
-                      <Select onValueChange={setAssignedManagerEmail} value={assignedManagerEmail}>
-                        <SelectTrigger className="bg-white">
-                          <SelectValue placeholder="Pilih Manager" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {managers.length === 0 ? (
-                            <SelectItem value="no-manager" disabled>Tidak ada manager tersedia</SelectItem>
-                          ) : (
-                            managers.map((m) => (
-                              <SelectItem key={m.email} value={m.email}>
-                                {m.email}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <Label>Email Manager Penanggung Jawab</Label>
+                    <Select onValueChange={setAssignedManagerEmail} value={assignedManagerEmail}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Pilih Manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {managers.length === 0 ? (
+                          <SelectItem value="no-manager" disabled>Tidak ada manager tersedia</SelectItem>
+                        ) : (
+                          managers.map((m) => (
+                            <SelectItem key={m.email} value={m.email}>
+                              {m.email}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 
                 {(approvalType === "DIREKTUR" || approvalType === "BOTH") && (
                   <div className="space-y-2 animate-in fade-in duration-200">
-                    <div className="flex justify-between items-center">
-                      <Label>Email Direktur</Label>
-                      <button
-                        type="button"
-                        onClick={() => setUseManualDirector(!useManualDirector)}
-                        className="text-[10px] text-primary underline hover:text-primary/80"
-                      >
-                        {useManualDirector ? "Gunakan Dropdown" : "Ketik Manual"}
-                      </button>
-                    </div>
-                    {useManualDirector ? (
-                      <Input
-                        type="email"
-                        value={assignedDirectorEmail}
-                        onChange={(e) => setAssignedDirectorEmail(e.target.value)}
-                        placeholder="Ketik email direktur..."
-                        className="bg-white"
-                      />
-                    ) : (
-                      <Select onValueChange={setAssignedDirectorEmail} value={assignedDirectorEmail}>
-                        <SelectTrigger className="bg-white">
-                          <SelectValue placeholder="Pilih Direktur" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {directors.length === 0 ? (
-                            <SelectItem value="no-director" disabled>Tidak ada direktur tersedia</SelectItem>
-                          ) : (
-                            directors.map((d) => (
-                              <SelectItem key={d.email} value={d.email}>
-                                {d.email}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <Label>Email Direktur Penanggung Jawab</Label>
+                    <Select onValueChange={setAssignedDirectorEmail} value={assignedDirectorEmail}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Pilih Direktur" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {directors.length === 0 ? (
+                          <SelectItem value="no-director" disabled>Tidak ada direktur tersedia</SelectItem>
+                        ) : (
+                          directors.map((d) => (
+                            <SelectItem key={d.email} value={d.email}>
+                              {d.email}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </div>
