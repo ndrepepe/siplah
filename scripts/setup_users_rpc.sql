@@ -99,11 +99,11 @@ BEGIN
     created_at,
     updated_at
   ) VALUES (
-    new_user_id::text,
+    new_user_id, -- Menggunakan UUID asli (bukan text)
     new_user_id,
     jsonb_build_object('sub', new_user_id, 'email', user_email),
     'email',
-    new_user_id::text, -- Mengisi provider_id dengan ID user (wajib di Supabase)
+    new_user_id::text, -- provider_id tetap text
     now(),
     now(),
     now()
