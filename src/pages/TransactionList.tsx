@@ -150,6 +150,11 @@ const TransactionList = () => {
 
       if (error) throw error;
 
+      // Mencatat log aktivitas menandai sudah di-print
+      await logActivity("MARK_PRINTED", {
+        transaction_id: transactionId
+      });
+
       toast.success("Transaksi telah ditandai sebagai sudah di-print");
       fetchTransactions();
     } catch (error: any) {
@@ -203,7 +208,7 @@ const TransactionList = () => {
     }).format(amount);
   };
 
-  const downloadPDF = (t: any) => {
+  const downloadPDF = async (t: any) => {
     const doc = new jsPDF();
     
     doc.setFontSize(16);
@@ -303,6 +308,14 @@ const TransactionList = () => {
     doc.text("Dokumen ini dihasilkan secara otomatis oleh Grand Line Manager.", 14, finalY + 10);
 
     doc.save(`transaksi-${t.code}.pdf`);
+
+    // Mencatat log aktivitas download PDF
+    await logActivity("DOWNLOAD_PDF", {
+      transaction_id: t.id,
+      school_name: t.school_name,
+      code: t.code
+    });
+
     toast.success("PDF berhasil diunduh");
   };
 

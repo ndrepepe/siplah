@@ -62,6 +62,14 @@ const ActivityLogs = () => {
         return <Badge className="bg-red-500 hover:bg-red-600">DELETE</Badge>;
       case "APPROVE_TRANSACTION":
         return <Badge className="bg-emerald-600 hover:bg-emerald-700">APPROVE</Badge>;
+      case "DOWNLOAD_PDF":
+        return <Badge className="bg-cyan-500 hover:bg-cyan-600">DOWNLOAD PDF</Badge>;
+      case "UPLOAD_ATTACHMENT":
+        return <Badge className="bg-orange-500 hover:bg-orange-600">UPLOAD ATTACHMENT</Badge>;
+      case "REMOVE_ATTACHMENT":
+        return <Badge className="bg-rose-500 hover:bg-rose-600">REMOVE ATTACHMENT</Badge>;
+      case "MARK_PRINTED":
+        return <Badge className="bg-purple-500 hover:bg-purple-600">MARK PRINTED</Badge>;
       default:
         return <Badge variant="outline">{action}</Badge>;
     }

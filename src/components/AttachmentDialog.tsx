@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Loader2, Upload, X, Image as ImageIcon, FileText, Download, CheckCircle2, Plus, AlertCircle } from "lucide-react";
 import imageCompression from 'browser-image-compression';
 import { PDFDocument } from 'pdf-lib';
+import { logActivity } from "@/utils/logger";
 
 interface AttachmentDialogProps {
   transaction: any;
@@ -169,6 +170,14 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
 
       if (updateError) throw updateError;
 
+      // Mencatat log aktivitas upload lampiran
+      await logActivity("UPLOAD_ATTACHMENT", {
+        transaction_id: transaction.id,
+        school_name: transaction.school_name,
+        file_name: file.name,
+        file_size_kb: (file.size / 1024).toFixed(0)
+      });
+
       toast.success("Lampiran berhasil disimpan");
       onSuccess();
       onOpenChange(false);
@@ -191,6 +200,12 @@ const AttachmentDialog = ({ transaction, open, onOpenChange, onSuccess }: Attach
         .eq('id', transaction.id);
 
       if (error) throw error;
+
+      // Mencatat log aktivitas hapus lampiran
+      await logActivity("REMOVE_ATTACHMENT", {
+        transaction_id: transaction.id,
+        school_name: transaction.school_name
+      });
 
       toast.success("Lampiran berhasil dihapus");
       onSuccess();
