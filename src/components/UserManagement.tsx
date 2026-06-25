@@ -44,21 +44,9 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch('https://prnnjpvsssmasnvwohmo.supabase.co/functions/v1/manage-users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ action: 'list_users' })
-      });
-
-      const result = await response.json();
-      if (result.error) throw new Error(result.error);
-      setUsers(result.users || []);
+      const { data, error } = await supabase.rpc('list_users_admin');
+      if (error) throw error;
+      setUsers(data || []);
     } catch (error: any) {
       toast.error("Gagal memuat daftar user: " + error.message);
     } finally {
@@ -79,23 +67,13 @@ const UserManagement = () => {
 
     setIsCreating(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('https://prnnjpvsssmasnvwohmo.supabase.co/functions/v1/manage-users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({
-          action: 'create_user',
-          email: newEmail,
-          password: newPassword,
-          role: newRole
-        })
+      const { error } = await supabase.rpc('create_user_admin', {
+        user_email: newEmail,
+        user_password: newPassword,
+        user_role: newRole
       });
 
-      const result = await response.json();
-      if (result.error) throw new Error(result.error);
+      if (error) throw error;
 
       toast.success("User baru berhasil dibuat!");
       setNewEmail("");
@@ -111,22 +89,12 @@ const UserManagement = () => {
 
   const handleRoleChange = async (userId: string, role: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('https://prnnjpvsssmasnvwohmo.supabase.co/functions/v1/manage-users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({
-          action: 'update_user_role',
-          userId,
-          role
-        })
+      const { error } = await supabase.rpc('update_user_role_admin', {
+        target_user_id: userId,
+        new_role: role
       });
 
-      const result = await response.json();
-      if (result.error) throw new Error(result.error);
+      if (error) throw error;
 
       toast.success("Role user berhasil diperbarui!");
       fetchUsers();
@@ -143,22 +111,12 @@ const UserManagement = () => {
 
     setIsUpdatingPassword(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('https://prnnjpvsssmasnvwohmo.supabase.co/functions/v1/manage-users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({
-          action: 'update_user_password',
-          userId: selectedUser.id,
-          password: newPasswordForUser
-        })
+      const { error } = await supabase.rpc('update_user_password_admin', {
+        target_user_id: selectedUser.id,
+        new_password: newPasswordForUser
       });
 
-      const result = await response.json();
-      if (result.error) throw new Error(result.error);
+      if (error) throw error;
 
       toast.success(`Password untuk ${selectedUser.email} berhasil diubah!`);
       setIsPasswordDialogOpen(false);
@@ -175,21 +133,11 @@ const UserManagement = () => {
     if (!confirm(`Apakah Anda yakin ingin menghapus user ${email}?`)) return;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('https://prnnjpvsssmasnvwohmo.supabase.co/functions/v1/manage-users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({
-          action: 'delete_user',
-          userId
-        })
+      const { error } = await supabase.rpc('delete_user_admin', {
+        target_user_id: userId
       });
 
-      const result = await response.json();
-      if (result.error) throw new Error(result.error);
+      if (error) throw error;
 
       toast.success("User berhasil dihapus");
       fetchUsers();
@@ -293,7 +241,7 @@ const UserManagement = () => {
                   ) : (
                     users.map((u) => {
                       const isSelf = u.email?.toLowerCase() === 'salmon@pepenio.my.id';
-                      const currentRole = u.user_metadata?.role || 'STAFF';
+                      const currentRole = u.raw_user_meta_data?.role || 'STAFF';
 
                       return (
                         <TableRow key={u.id}>
