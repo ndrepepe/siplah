@@ -262,9 +262,24 @@ const TransactionList = () => {
       ["Jenis Produk", t.produk],
       ["Nominal Transaksi", formatCurrency(t.transaction_amount)],
       ["Status Transaksi", t.status],
-      ["Tipe Rekanan", t.rekanan_type],
-      ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"],
     ];
+
+    // Tambahkan informasi penyetuju jika statusnya DISETUJUI
+    if (t.status === "DISETUJUI") {
+      let approvers = [];
+      if (t.manager_approved && t.assigned_manager_email) {
+        approvers.push(`Manager (${t.assigned_manager_email})`);
+      }
+      if (t.director_approved && t.assigned_director_email) {
+        approvers.push(`Direktur (${t.assigned_director_email})`);
+      }
+      tableData.push(["Disetujui Oleh", approvers.length > 0 ? approvers.join("\n") : "Sistem (Tanpa Approval)"]);
+    }
+
+    tableData.push(
+      ["Tipe Rekanan", t.rekanan_type],
+      ["Nama Rekanan", t.rekanan_type === "REKANAN" ? t.nama_rekanan : "NON REKANAN"]
+    );
 
     // Add BM Details
     tableData.push(["", ""]);
