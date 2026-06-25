@@ -29,6 +29,10 @@ interface BMSplit {
   percentage: string;
 }
 
+interface ApproverUser {
+  email: string;
+}
+
 interface EditTransactionDialogProps {
   transaction: any;
   open: boolean;
@@ -41,7 +45,10 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
   const [bmType, setBmType] = useState<"single" | "multiple">("single");
   const [bmSplits, setBmSplits] = useState<BMSplit[]>([{ amount: "", percentage: "" }]);
   const [isSaving, setIsSaving] = useState(false);
-  const [profiles, setProfiles] = useState<any[]>([]);
+
+  // List Approvers dari Database
+  const [managers, setManagers] = useState<ApproverUser[]>([]);
+  const [directors, setDirectors] = useState<ApproverUser[]>([]);
 
   useEffect(() => {
     if (transaction) {
@@ -65,23 +72,44 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
     }
   }, [transaction]);
 
-  // Fetch profiles for email selection
+  // Fetch data user/approver dari database menggunakan RPC get_approvers
   useEffect(() => {
-    const fetchProfiles = async () => {
+    const fetchApprovers = async () => {
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("email, role, full_name");
+        const { data, error } = await supabase.rpc("get_approvers");
         
-        if (!error && data) {
-          setProfiles(data);
+        if (error) throw error;
+
+        if (data) {
+          const mList = data
+            .filter((u: any) => u.role?.toUpperCase() === "MANAGER")
+            .map((u: any) => ({ email: u.email }));
+          
+          const dList = data
+            .filter((u: any) => u.role?.toUpperCase() === "DIREKTUR" || u.role?.toUpperCase() === "DIRECTOR")
+            .map((u: any) => ({ email: u.email }));
+          
+          setManagers(mList);
+          setDirectors(dList);
         }
       } catch (err) {
-        console.error("Gagal mengambil data profil:", err);
+        console.error("Gagal mengambil data approvers:", err);
       }
     };
-    fetchProfiles();
+
+    fetchApprovers();
   }, []);
+
+  // Reset email pilihan jika tipe approval berubah
+  useEffect(() => {
+    if (formData.approval_type === "NONE") {
+      setFormData(prev => ({ ...prev, assigned_manager_email: "", assigned_director_email: "" }));
+    } else if (formData.approval_type === "MANAGER") {
+      setFormData(prev => ({ ...prev, assigned_director_email: "" }));
+    } else if (formData.approval_type === "DIREKTUR") {
+      setFormData(prev => ({ ...prev, assigned_manager_email: "" }));
+    }
+  }, [formData.approval_type]);
 
   const addBmSplit = () => {
     setBmSplits([...bmSplits, { amount: "", percentage: "" }]);
@@ -178,15 +206,8 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
     }
   };
 
-  const splitTotal = bmSplits.reduce((sum, split) => sum + (parseFloat(formData.transaction_amount) || 0), 0);
+  const splitTotal = bmSplits.reduce((sum, split) => sum + (parseFloat(split.amount) || 0), 0);
   const remainingAmount = (parseFloat(formData.transaction_amount) || 0) - splitTotal;
-
-  // Filter strictly by role. If no users have that role, fallback to all profiles so the dropdown is not empty.
-  const filteredManagers = profiles.filter(p => p.role?.toUpperCase() === "MANAGER");
-  const managerProfiles = filteredManagers.length > 0 ? filteredManagers : profiles;
-
-  const filteredDirectors = profiles.filter(p => p.role?.toUpperCase() === "DIREKTUR" || p.role?.toUpperCase() === "DIRECTOR");
-  const directorProfiles = filteredDirectors.length > 0 ? filteredDirectors : profiles;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -282,64 +303,52 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
               </div>
 
               {(formData.approval_type === "MANAGER" || formData.approval_type === "BOTH") && (
-                <div className="space-y-2">
-                  <Label>Email Manager</Label>
-                  {profiles.length > 0 ? (
-                    <Select
-                      value={formData.assigned_manager_email || ""}
-                      onValueChange={(val) => setFormData({...formData, assigned_manager_email: val})}
-                    >
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Pilih Manager" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {managerProfiles.map((p) => (
-                          <SelectItem key={p.email} value={p.email}>
-                            {p.full_name ? `${p.full_name} (${p.email})` : p.email}
+                <div className="space-y-2 animate-in fade-in duration-200">
+                  <Label>Email Manager Penanggung Jawab</Label>
+                  <Select 
+                    value={formData.assigned_manager_email || ""} 
+                    onValueChange={(val) => setFormData({...formData, assigned_manager_email: val})}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Pilih Manager" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {managers.length === 0 ? (
+                        <SelectItem value="no-manager" disabled>Tidak ada manager tersedia</SelectItem>
+                      ) : (
+                        managers.map((m) => (
+                          <SelectItem key={m.email} value={m.email}>
+                            {m.email}
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      type="email"
-                      value={formData.assigned_manager_email || ""}
-                      onChange={(e) => setFormData({...formData, assigned_manager_email: e.target.value})}
-                      placeholder="manager@email.com"
-                      className="bg-white"
-                    />
-                  )}
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
               {(formData.approval_type === "DIREKTUR" || formData.approval_type === "BOTH") && (
-                <div className="space-y-2">
-                  <Label>Email Direktur</Label>
-                  {profiles.length > 0 ? (
-                    <Select
-                      value={formData.assigned_director_email || ""}
-                      onValueChange={(val) => setFormData({...formData, assigned_director_email: val})}
-                    >
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Pilih Direktur" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {directorProfiles.map((p) => (
-                          <SelectItem key={p.email} value={p.email}>
-                            {p.full_name ? `${p.full_name} (${p.email})` : p.email}
+                <div className="space-y-2 animate-in fade-in duration-200">
+                  <Label>Email Direktur Penanggung Jawab</Label>
+                  <Select 
+                    value={formData.assigned_director_email || ""} 
+                    onValueChange={(val) => setFormData({...formData, assigned_director_email: val})}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Pilih Direktur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {directors.length === 0 ? (
+                        <SelectItem value="no-director" disabled>Tidak ada direktur tersedia</SelectItem>
+                      ) : (
+                        directors.map((d) => (
+                          <SelectItem key={d.email} value={d.email}>
+                            {d.email}
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      type="email"
-                      value={formData.assigned_director_email || ""}
-                      onChange={(e) => setFormData({...formData, assigned_director_email: e.target.value})}
-                      placeholder="direktur@email.com"
-                      className="bg-white"
-                    />
-                  )}
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
