@@ -12,6 +12,7 @@ import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileS
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,9 @@ const Index = () => {
       toast.error("Gagal mengubah role: " + error.message);
     }
   };
+
+  const defaultTab = (role === "MANAGER" || role === "DIREKTUR") ? "list" : "dashboard";
+  const showAllTabs = role !== "MANAGER" && role !== "DIREKTUR";
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#640D5F]/10 via-[#B12C00]/5 to-[#FFCC00]/10 p-4 md:p-8 overflow-y-auto">
@@ -97,30 +101,39 @@ const Index = () => {
           </div>
         </header>
 
-        <Tabs defaultValue="dashboard" className="w-full">
+        <Tabs key={role} defaultValue={defaultTab} className="w-full">
           <div className="flex justify-center mb-8">
-            <TabsList className={`grid w-full max-w-4xl ${isSuperAdmin ? 'grid-cols-6' : 'grid-cols-5'} h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10`}>
-              <TabsTrigger 
-                value="dashboard" 
-                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
-              >
-                <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="input" 
-                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
-              >
-                <PlusCircle className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">Input</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="bulk" 
-                className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
-              >
-                <FileSpreadsheet className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">Input Masal</span>
-              </TabsTrigger>
+            <TabsList className={cn(
+              "grid w-full max-w-4xl h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10",
+              isSuperAdmin ? "grid-cols-6" : showAllTabs ? "grid-cols-5" : "grid-cols-2"
+            )}>
+              {showAllTabs && (
+                <TabsTrigger 
+                  value="dashboard" 
+                  className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
+                >
+                  <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </TabsTrigger>
+              )}
+              {showAllTabs && (
+                <TabsTrigger 
+                  value="input" 
+                  className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
+                >
+                  <PlusCircle className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Input</span>
+                </TabsTrigger>
+              )}
+              {showAllTabs && (
+                <TabsTrigger 
+                  value="bulk" 
+                  className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
+                >
+                  <FileSpreadsheet className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Input Masal</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger 
                 value="list" 
                 className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
@@ -147,17 +160,23 @@ const Index = () => {
             </TabsList>
           </div>
 
-          <TabsContent value="dashboard" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Dashboard />
-          </TabsContent>
+          {showAllTabs && (
+            <TabsContent value="dashboard" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <Dashboard />
+            </TabsContent>
+          )}
 
-          <TabsContent value="input" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Generator />
-          </TabsContent>
+          {showAllTabs && (
+            <TabsContent value="input" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <Generator />
+            </TabsContent>
+          )}
 
-          <TabsContent value="bulk" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <BulkImport />
-          </TabsContent>
+          {showAllTabs && (
+            <TabsContent value="bulk" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <BulkImport />
+            </TabsContent>
+          )}
 
           <TabsContent value="list" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <TransactionList />
