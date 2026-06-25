@@ -44,6 +44,7 @@ import TransactionPreviewDialog from "@/components/TransactionPreviewDialog";
 const TransactionList = () => {
   const { user, role } = useAuth();
   const isSuperAdmin = role === "SUPER_ADMIN" || user?.email?.toLowerCase() === "salmon@pepenio.my.id";
+  const showPrintColumn = role !== "MANAGER" && role !== "DIREKTUR";
 
   // Helper to get last 30 days range including today
   const getLast30DaysRange = () => {
@@ -450,14 +451,14 @@ const TransactionList = () => {
                 <TableHead className="font-bold px-2">Kode Transaksi</TableHead>
                 <TableHead className="font-bold px-2">Rekanan</TableHead>
                 <TableHead className="font-bold px-2">Bank / Rekening</TableHead>
-                <TableHead className="font-bold text-center px-2">Print</TableHead>
+                {showPrintColumn && <TableHead className="font-bold text-center px-2">Print</TableHead>}
                 <TableHead className="font-bold text-center px-2">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="h-24 text-center">
+                  <TableCell colSpan={showPrintColumn ? 13 : 12} className="h-24 text-center">
                     <div className="flex items-center justify-center">
                       <Loader2 className="w-6 h-6 animate-spin mr-2" />
                       Memuat data...
@@ -466,7 +467,7 @@ const TransactionList = () => {
                 </TableRow>
               ) : filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={showPrintColumn ? 13 : 12} className="h-24 text-center text-muted-foreground">
                     Tidak ada data transaksi yang membutuhkan tindakan Anda saat ini.
                   </TableCell>
                 </TableRow>
@@ -586,23 +587,25 @@ const TransactionList = () => {
                       <div className="text-[10px] text-muted-foreground">{t.account_number || "-"}</div>
                       <div className="text-[9px] italic leading-tight">{t.account_owner || "-"}</div>
                     </TableCell>
-                    <TableCell className="text-center px-2">
-                      <div className="flex items-center justify-center gap-1">
-                        {t.is_printed ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={() => handlePrint(t.id)}
-                            title="Tandai sebagai sudah di-print"
-                          >
-                            <Circle className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+                    {showPrintColumn && (
+                      <TableCell className="text-center px-2">
+                        <div className="flex items-center justify-center gap-1">
+                          {t.is_printed ? (
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => handlePrint(t.id)}
+                              title="Tandai sebagai sudah di-print"
+                            >
+                              <Circle className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
                     <TableCell className="px-2">
                       <div className="flex items-center justify-center gap-1">
                         {/* Tombol Approval & Preview untuk Manager / Direktur */}
