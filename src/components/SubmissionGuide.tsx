@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PhoneCall, FileInput, ShieldCheck, Printer, ArrowRight, ArrowDown, HelpCircle } from "lucide-react";
+import { PhoneCall, FileInput, ShieldCheck, Printer, ArrowRight, ArrowDown, HelpCircle, UserCheck } from "lucide-react";
 
 interface Step {
   number: string;
@@ -56,6 +56,22 @@ const SubmissionGuide = () => {
     },
     {
       number: "3",
+      title: "Approval Manager / Direktur",
+      actor: "Manager / Direktur",
+      description: "Manager dan/atau Direktur memeriksa rincian pengajuan transaksi dan memberikan persetujuan (approval) melalui sistem.",
+      icon: UserCheck,
+      color: "bg-orange-500",
+      textColor: "text-orange-500",
+      borderColor: "border-orange-100",
+      bgColor: "bg-orange-50/50",
+      detailInfo: [
+        "Manager/Direktur menerima notifikasi atau melihat daftar transaksi yang ditugaskan.",
+        "Melakukan review rincian nominal, % BM, dan alasan pengajuan.",
+        "Klik tombol 'Approve' untuk menyetujui pengajuan transaksi."
+      ]
+    },
+    {
+      number: "4",
       title: "Konfirmasi Accounting",
       actor: "Accounting",
       description: "Pihak Accounting akan melakukan telepon konfirmasi balik ke Cabang untuk verifikasi data.",
@@ -71,7 +87,7 @@ const SubmissionGuide = () => {
       ]
     },
     {
-      number: "4",
+      number: "5",
       title: "Cetak Bukti (Print)",
       actor: "Sistem / Cabang",
       description: "Setelah dikonfirmasi, bukti transaksi dapat diunduh dalam bentuk PDF dan dicetak (Print).",
@@ -105,20 +121,20 @@ const SubmissionGuide = () => {
         <CardContent className="p-6 md:p-10 space-y-10">
           
           {/* Bagan Alur Visual */}
-          <div className="relative flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-4">
+          <div className="relative flex flex-col lg:flex-row items-stretch justify-between gap-6 lg:gap-4">
             {steps.map((step, index) => (
               <React.Fragment key={step.number}>
                 {/* Card Langkah */}
                 <div 
                   onClick={() => setSelectedStep(step)}
-                  className={`w-full lg:w-1/4 border ${step.borderColor} ${step.bgColor} rounded-2xl p-6 shadow-sm hover:shadow-md hover:scale-105 cursor-pointer transition-all duration-300 relative group`}
+                  className={`w-full lg:flex-1 border ${step.borderColor} ${step.bgColor} rounded-2xl p-6 shadow-sm hover:shadow-md hover:scale-105 cursor-pointer transition-all duration-300 relative group flex flex-col justify-between`}
                 >
                   {/* Badge Nomor */}
                   <div className={`absolute -top-3 -left-3 w-8 h-8 ${step.color} text-white rounded-full flex items-center justify-center font-black text-sm shadow-md`}>
                     {step.number}
                   </div>
 
-                  <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="flex flex-col items-center text-center space-y-4 h-full justify-between">
                     <div className={`p-4 rounded-2xl bg-white shadow-sm ${step.textColor} group-hover:scale-110 transition-transform duration-300`}>
                       <step.icon className="w-8 h-8" />
                     </div>
@@ -127,7 +143,7 @@ const SubmissionGuide = () => {
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                         {step.actor}
                       </span>
-                      <h4 className="font-bold text-slate-800 text-base pt-1">{step.title}</h4>
+                      <h4 className="font-bold text-slate-800 text-sm pt-1 leading-tight">{step.title}</h4>
                     </div>
 
                     <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
@@ -145,11 +161,11 @@ const SubmissionGuide = () => {
                   <>
                     {/* Panah Desktop */}
                     <div className="hidden lg:flex items-center justify-center text-primary/40 animate-pulse">
-                      <ArrowRight className="w-6 h-6" />
+                      <ArrowRight className="w-5 h-5" />
                     </div>
                     {/* Panah Mobile */}
                     <div className="flex lg:hidden items-center justify-center text-primary/40 py-2 animate-pulse">
-                      <ArrowDown className="w-6 h-6" />
+                      <ArrowDown className="w-5 h-5" />
                     </div>
                   </>
                 )}
@@ -160,7 +176,7 @@ const SubmissionGuide = () => {
         </CardContent>
       </Card>
 
-      {/* Popup Modal Detail Langkah dengan Animasi Lebih Lambat & Jelas */}
+      {/* Popup Modal Detail Langkah */}
       <Dialog open={selectedStep !== null} onOpenChange={(open) => !open && setSelectedStep(null)}>
         <DialogContent className="sm:max-w-md rounded-3xl p-6 border-primary/10 bg-white/95 backdrop-blur-md transition-all duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-90 data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-from-bottom-12 data-[state=closed]:slide-out-to-bottom-8">
           {selectedStep && (
