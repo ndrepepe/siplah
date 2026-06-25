@@ -685,7 +685,7 @@ const TransactionList = () => {
                         )}
 
                         {/* Tombol untuk Super Admin */}
-                        {isSuperAdmin && (
+                        {role === "SUPER_ADMIN" && (
                           <>
                             <Button
                               variant="ghost"
