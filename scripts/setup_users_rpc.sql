@@ -4,6 +4,7 @@ DROP FUNCTION IF EXISTS create_user_admin(text, text, text);
 DROP FUNCTION IF EXISTS update_user_role_admin(uuid, text);
 DROP FUNCTION IF EXISTS update_user_password_admin(uuid, text);
 DROP FUNCTION IF EXISTS delete_user_admin(uuid);
+DROP FUNCTION IF EXISTS get_approvers();
 
 -- 1. Fungsi untuk mengambil daftar pengguna (Hanya untuk Super Admin)
 CREATE OR REPLACE FUNCTION list_users_admin()
@@ -99,11 +100,11 @@ BEGIN
     created_at,
     updated_at
   ) VALUES (
-    new_user_id, -- Menggunakan UUID asli (bukan text)
+    new_user_id,
     new_user_id,
     jsonb_build_object('sub', new_user_id, 'email', user_email),
     'email',
-    new_user_id::text, -- provider_id tetap text
+    new_user_id::text,
     now(),
     now(),
     now()
@@ -180,3 +181,31 @@ BEGIN
   DELETE FROM auth.users WHERE id = target_user_id;
 END;
 $$;
+
+-- 6. Fungsi publik/authenticated untuk mengambil daftar email & role approver secara aman
+CREATE OR REPLACE FUNCTION get_approvers()
+RETURNS TABLE (
+  email VARCHAR,
+  role TEXT
+)
+SECURITY DEFINER
+SET search_path = auth, public, extensions
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Hanya izinkan pengguna yang sudah login (authenticated)
+  IF auth.role() <> 'authenticated' THEN
+    RAISE EXCEPTION 'Akses ditolak: Silakan login terlebih dahulu.';
+  END IF;
+
+  RETURN QUERY
+  SELECT 
+    u.email, 
+    COALESCE(u.raw_user_meta_data->>'role', 'STAFF') as role
+  FROM auth.users u
+  WHERE u.raw_user_meta_data->>'role' IS NOT NULL;
+END;
+$$;
+
+-- Berikan izin eksekusi ke pengguna yang terautentikasi
+GRANT EXECUTE ON FUNCTION get_approvers() TO authenticated;

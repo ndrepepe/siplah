@@ -57,13 +57,11 @@ const Generator = () => {
 
   const { toast: showToast } = useToast();
 
-  // Fetch data user/approver dari database
+  // Fetch data user/approver dari database menggunakan RPC get_approvers
   useEffect(() => {
     const fetchApprovers = async () => {
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("email, role");
+        const { data, error } = await supabase.rpc("get_approvers");
         
         if (error) throw error;
 
@@ -80,7 +78,7 @@ const Generator = () => {
           setDirectors(dList);
         }
       } catch (err) {
-        console.error("Gagal mengambil data profiles:", err);
+        console.error("Gagal mengambil data approvers:", err);
       }
     };
 
