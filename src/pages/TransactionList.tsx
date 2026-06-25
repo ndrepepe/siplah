@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar, Paperclip, Image as ImageIcon, ThumbsUp, ShieldAlert, Eye } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar, Paperclip, Image as ImageIcon, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -148,47 +148,6 @@ const TransactionList = () => {
       fetchTransactions();
     } catch (error: any) {
       toast.error("Gagal menandai transaksi: " + error.message);
-    }
-  };
-
-  const handleApprove = async (t: any) => {
-    try {
-      const updates: any = {};
-      const nowStr = new Date().toISOString();
-
-      if (role === "MANAGER") {
-        updates.manager_approved = true;
-        updates.manager_approval_date = nowStr;
-      } else if (role === "DIREKTUR") {
-        updates.director_approved = true;
-        updates.director_approval_date = nowStr;
-      }
-
-      // Cek apakah semua approval yang dibutuhkan sudah terpenuhi
-      const willBeManagerApproved = role === "MANAGER" ? true : t.manager_approved;
-      const willBeDirectorApproved = role === "DIREKTUR" ? true : t.director_approved;
-      const approvalType = t.approval_type || "BOTH";
-
-      let isFullyApproved = false;
-      if (approvalType === "MANAGER" && willBeManagerApproved) isFullyApproved = true;
-      if (approvalType === "DIREKTUR" && willBeDirectorApproved) isFullyApproved = true;
-      if (approvalType === "BOTH" && willBeManagerApproved && willBeDirectorApproved) isFullyApproved = true;
-
-      if (isFullyApproved) {
-        updates.status = "DISETUJUI";
-      }
-
-      const { error } = await supabase
-        .from("transactions")
-        .update(updates)
-        .eq("id", t.id);
-
-      if (error) throw error;
-
-      toast.success("Transaksi berhasil disetujui!");
-      fetchTransactions();
-    } catch (error: any) {
-      toast.error("Gagal menyetujui transaksi: " + error.message);
     }
   };
 
@@ -623,31 +582,20 @@ const TransactionList = () => {
                     )}
                     <TableCell className="px-2">
                       <div className="flex items-center justify-center gap-1">
-                        {/* Tombol Approval & Preview untuk Manager / Direktur */}
+                        {/* Tombol Preview untuk Manager / Direktur */}
                         {(role === "MANAGER" || role === "DIREKTUR") && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 px-2 text-xs font-medium rounded-lg flex items-center gap-1 border-slate-200 hover:bg-slate-50"
-                              onClick={() => {
-                                setPreviewTransaction(t);
-                                setIsPreviewDialogOpen(true);
-                              }}
-                              title="Preview Pengajuan"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-slate-500" /> Preview
-                            </Button>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="h-7 px-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg flex items-center gap-1"
-                              onClick={() => handleApprove(t)}
-                              title="Setujui Transaksi"
-                            >
-                              <ThumbsUp className="w-3 h-3" /> Approve
-                            </Button>
-                          </>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs font-medium rounded-lg flex items-center gap-1 border-slate-200 hover:bg-slate-50"
+                            onClick={() => {
+                              setPreviewTransaction(t);
+                              setIsPreviewDialogOpen(true);
+                            }}
+                            title="Preview Pengajuan"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-slate-500" /> Preview
+                          </Button>
                         )}
 
                         {/* Tombol untuk Staff */}
@@ -771,6 +719,7 @@ const TransactionList = () => {
         transaction={previewTransaction}
         open={isPreviewDialogOpen}
         onOpenChange={setIsPreviewDialogOpen}
+        onSuccess={fetchTransactions}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
