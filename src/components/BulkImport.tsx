@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { logActivity } from "@/utils/logger";
 
 const BulkImport = () => {
   const [loading, setLoading] = useState(false);
@@ -203,6 +204,12 @@ const BulkImport = () => {
     try {
       const { error } = await supabase.from('transactions').insert(formattedData);
       if (error) throw error;
+
+      // Mencatat log aktivitas bulk import
+      await logActivity("BULK_IMPORT_TRANSACTIONS", {
+        count: formattedData.length,
+        file_name: fileName
+      });
 
       toast.success(`${formattedData.length} data berhasil diimpor! Mengirim ringkasan WhatsApp...`);
       await sendSummaryNotification(formattedData);

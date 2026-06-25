@@ -8,9 +8,10 @@ import Dashboard from "./Dashboard";
 import BulkImport from "@/components/BulkImport";
 import SubmissionGuide from "@/components/SubmissionGuide";
 import UserManagement from "@/components/UserManagement";
+import ActivityLogs from "@/components/ActivityLogs";
 import ChangePasswordDialog from "@/components/ChangePasswordDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet, HelpCircle, ShieldAlert, Users, Key } from "lucide-react";
+import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet, HelpCircle, ShieldAlert, Users, Key, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -120,8 +121,8 @@ const Index = () => {
         <Tabs key={role} defaultValue={defaultTab} className="w-full">
           <div className="flex justify-center mb-8">
             <TabsList className={cn(
-              "grid w-full max-w-4xl h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10",
-              isSuperAdmin ? "grid-cols-6" : showAllTabs ? "grid-cols-5" : "grid-cols-2"
+              "grid w-full max-w-5xl h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10 overflow-x-auto",
+              isSuperAdmin ? "grid-cols-7" : showAllTabs ? "grid-cols-5" : "grid-cols-2"
             )}>
               {showAllTabs && (
                 <TabsTrigger 
@@ -173,6 +174,15 @@ const Index = () => {
                   <span className="hidden sm:inline">Kelola User</span>
                 </TabsTrigger>
               )}
+              {isSuperAdmin && (
+                <TabsTrigger 
+                  value="logs" 
+                  className="flex items-center gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-xs md:text-sm font-bold transition-all"
+                >
+                  <ShieldCheck className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Log Aktivitas</span>
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -205,6 +215,12 @@ const Index = () => {
           {isSuperAdmin && (
             <TabsContent value="users" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <UserManagement />
+            </TabsContent>
+          )}
+
+          {isSuperAdmin && (
+            <TabsContent value="logs" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <ActivityLogs />
             </TabsContent>
           )}
         </Tabs>

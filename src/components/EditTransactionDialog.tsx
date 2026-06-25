@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { logActivity } from "@/utils/logger";
 import {
   Dialog,
   DialogContent,
@@ -197,6 +198,14 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
         .eq("id", transaction.id);
 
       if (error) throw error;
+
+      // Mencatat log aktivitas update
+      await logActivity("UPDATE_TRANSACTION", {
+        transaction_id: transaction.id,
+        school_name: formData.school_name,
+        po_number: formData.po_number,
+        amount: cleanAmount
+      });
 
       toast.success("Data berhasil diperbarui");
       onSuccess();

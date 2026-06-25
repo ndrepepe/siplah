@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/utils/logger";
 import {
   Dialog,
   DialogContent,
@@ -97,6 +98,16 @@ const TransactionPreviewDialog = ({
         .eq("id", transaction.id);
 
       if (error) throw error;
+
+      // Mencatat log aktivitas approval
+      await logActivity("APPROVE_TRANSACTION", {
+        transaction_id: transaction.id,
+        school_name: transaction.school_name,
+        po_number: transaction.po_number,
+        role: role,
+        notes: approvalNotes,
+        fully_approved: isFullyApproved
+      });
 
       toast.success("Transaksi berhasil disetujui!");
       if (onSuccess) onSuccess();

@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, RefreshCw, Save, Plus, Trash2, Calculator, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { logActivity } from "@/utils/logger";
 import {
   Select,
   SelectContent,
@@ -238,6 +239,14 @@ const Generator = () => {
         .insert(transactionData);
 
       if (error) throw error;
+
+      // Mencatat log aktivitas
+      await logActivity("CREATE_TRANSACTION", {
+        school_name: schoolName,
+        po_number: poNumber,
+        amount: amount,
+        code: generatedCode
+      });
 
       showToast({
         title: "Berhasil!",

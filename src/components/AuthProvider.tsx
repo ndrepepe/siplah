@@ -2,6 +2,7 @@ import * as React from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logActivity } from "@/utils/logger";
 
 interface AuthContextType {
   session: Session | null;
@@ -34,13 +35,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // Dengar perubahan status auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
         const isSuperAdmin = currentUser.email?.toLowerCase() === "salmon@pepenio.my.id";
         setRole(isSuperAdmin ? "SUPER_ADMIN" : (currentUser.user_metadata?.role || "STAFF"));
+        
+        if (event === "SIGNED_IN") {
+          logActivity("LOGIN", { email: currentUser.email });
+        }
       }
       setLoading(false);
     });
@@ -55,6 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let timeoutId: NodeJS.Timeout;
 
     const handleAutoLogout = async () => {
+      await logActivity("LOGOUT", { email: user.email, reason: "Inactivity timeout" });
       await supabase.auth.signOut();
       toast.error("Sesi Anda telah berakhir karena tidak ada aktivitas selama 3 menit.", {
         duration: 6000,
@@ -94,6 +100,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    if (user) {
+      await logActivity("LOGOUT", { email: user.email });
+    }
     await supabase.auth.signOut();
   };
 

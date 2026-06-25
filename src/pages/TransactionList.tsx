@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { logActivity } from "@/utils/logger";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -124,6 +125,11 @@ const TransactionList = () => {
         .eq("id", deletingId);
 
       if (error) throw error;
+
+      // Mencatat log aktivitas delete
+      await logActivity("DELETE_TRANSACTION", {
+        transaction_id: deletingId
+      });
 
       toast.success("Data berhasil dihapus");
       fetchTransactions();
