@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, Trash2, Calculator } from "lucide-react";
+import { Loader2, Save, Plus, Trash2, Calculator, ShieldCheck } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface BMSplit {
@@ -46,7 +46,10 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
       setFormData({ 
         ...transaction,
         transaction_amount: transaction.transaction_amount?.toString() || "",
-        bm_percentage: transaction.bm_percentage?.toString() || ""
+        bm_percentage: transaction.bm_percentage?.toString() || "",
+        approval_type: transaction.approval_type || "BOTH",
+        assigned_manager_email: transaction.assigned_manager_email || "",
+        assigned_director_email: transaction.assigned_director_email || ""
       });
       
       if (transaction.bm_splits && Array.isArray(transaction.bm_splits)) {
@@ -133,6 +136,9 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
           account_number: formData.account_number,
           account_owner: formData.account_owner,
           status: formData.status,
+          approval_type: formData.approval_type,
+          assigned_manager_email: formData.assigned_manager_email || null,
+          assigned_director_email: formData.assigned_director_email || null
         })
         .eq("id", transaction.id);
 
@@ -213,8 +219,62 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
               <SelectContent>
                 <SelectItem value="DIAJUKAN">DIAJUKAN</SelectItem>
                 <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
+                <SelectItem value="DISETUJUI">DISETUJUI</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Approval Configuration Section */}
+          <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+            <Label className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              Konfigurasi Approval Pengajuan
+            </Label>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Dibutuhkan Approval Dari</Label>
+                <Select 
+                  value={formData.approval_type || "BOTH"} 
+                  onValueChange={(val) => setFormData({...formData, approval_type: val})}
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MANAGER">Hanya Manager</SelectItem>
+                    <SelectItem value="DIREKTUR">Hanya Direktur</SelectItem>
+                    <SelectItem value="BOTH">Manager & Direktur</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {(formData.approval_type === "MANAGER" || formData.approval_type === "BOTH") && (
+                <div className="space-y-2">
+                  <Label>Email Manager</Label>
+                  <Input
+                    type="email"
+                    value={formData.assigned_manager_email || ""}
+                    onChange={(e) => setFormData({...formData, assigned_manager_email: e.target.value})}
+                    placeholder="manager@email.com"
+                    className="bg-white"
+                  />
+                </div>
+              )}
+
+              {(formData.approval_type === "DIREKTUR" || formData.approval_type === "BOTH") && (
+                <div className="space-y-2">
+                  <Label>Email Direktur</Label>
+                  <Input
+                    type="email"
+                    value={formData.assigned_director_email || ""}
+                    onChange={(e) => setFormData({...formData, assigned_director_email: e.target.value})}
+                    placeholder="direktur@email.com"
+                    className="bg-white"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* BM Section */}

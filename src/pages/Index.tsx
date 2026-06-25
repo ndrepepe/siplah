@@ -7,9 +7,10 @@ import Dashboard from "./Dashboard";
 import BulkImport from "@/components/BulkImport";
 import SubmissionGuide from "@/components/SubmissionGuide";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet, HelpCircle } from "lucide-react";
+import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet, HelpCircle, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,9 +19,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Index = () => {
-  const { user, signOut } = useAuth();
+  const { user, role, updateRole, signOut } = useAuth();
+
+  const handleRoleChange = async (newRole: string) => {
+    try {
+      await updateRole(newRole);
+      toast.success(`Role berhasil diubah menjadi ${newRole}`);
+    } catch (error: any) {
+      toast.error("Gagal mengubah role: " + error.message);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#640D5F]/10 via-[#B12C00]/5 to-[#FFCC00]/10 p-4 md:p-8 overflow-y-auto">
@@ -38,7 +55,24 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Role Switcher */}
+            <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+              <span className="text-xs font-bold text-slate-500 px-2 uppercase flex items-center gap-1">
+                <ShieldAlert className="w-3.5 h-3.5 text-primary" /> Role:
+              </span>
+              <Select value={role} onValueChange={handleRoleChange}>
+                <SelectTrigger className="w-[130px] h-9 rounded-xl border-none bg-white shadow-sm font-bold text-xs text-primary">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="STAFF" className="text-xs font-bold">STAFF (Input)</SelectItem>
+                  <SelectItem value="MANAGER" className="text-xs font-bold">MANAGER</SelectItem>
+                  <SelectItem value="DIREKTUR" className="text-xs font-bold">DIREKTUR</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2 bg-white/50 hover:bg-accent hover:text-white border-primary/20 rounded-xl">

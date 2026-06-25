@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, RefreshCw, Save, Plus, Trash2, Calculator } from "lucide-react";
+import { Loader2, RefreshCw, Save, Plus, Trash2, Calculator, ShieldCheck } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -41,6 +41,12 @@ const Generator = () => {
   const [status, setStatus] = useState("DIAJUKAN");
   const [generatedCode, setGeneratedCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Approval States
+  const [approvalType, setApprovalType] = useState("BOTH");
+  const [assignedManagerEmail, setAssignedManagerEmail] = useState("");
+  const [assignedDirectorEmail, setAssignedDirectorEmail] = useState("");
+
   const { toast: showToast } = useToast();
 
   const generateCode = () => {
@@ -99,7 +105,6 @@ const Generator = () => {
 
   const sendWhatsAppNotification = async (data: any) => {
     try {
-      // Menggunakan nama fungsi langsung untuk invoke yang lebih stabil
       const { error } = await supabase.functions.invoke('send-whatsapp', {
         body: {
           school_name: data.school_name,
@@ -120,6 +125,16 @@ const Generator = () => {
 
     if (!schoolName || !poNumber || !transactionAmount || !generatedCode || !cabang || !namaSiplah || !produk || !rekananType) {
       toast.error("Mohon lengkapi semua field wajib");
+      return;
+    }
+
+    // Validasi email approval jika dipilih
+    if ((approvalType === "MANAGER" || approvalType === "BOTH") && !assignedManagerEmail) {
+      toast.error("Email Manager wajib diisi untuk tipe approval ini");
+      return;
+    }
+    if ((approvalType === "DIREKTUR" || approvalType === "BOTH") && !assignedDirectorEmail) {
+      toast.error("Email Direktur wajib diisi untuk tipe approval ini");
       return;
     }
 
@@ -144,7 +159,12 @@ const Generator = () => {
       account_number: accountNumber,
       account_owner: accountOwner,
       status: status,
-      code: generatedCode
+      code: generatedCode,
+      approval_type: approvalType,
+      assigned_manager_email: assignedManagerEmail || null,
+      assigned_director_email: assignedDirectorEmail || null,
+      manager_approved: false,
+      director_approved: false
     };
 
     try {
@@ -159,7 +179,6 @@ const Generator = () => {
         description: "Data transaksi disimpan.",
       });
 
-      // Kirim Notifikasi WhatsApp dengan toast promise
       toast.promise(sendWhatsAppNotification(transactionData), {
         loading: 'Mengirim notifikasi WhatsApp...',
         success: 'Notifikasi WhatsApp terkirim!',
@@ -183,6 +202,9 @@ const Generator = () => {
       setAccountOwner("");
       setStatus("DIAJUKAN");
       setGeneratedCode("");
+      setApprovalType("BOTH");
+      setAssignedManagerEmail("");
+      setAssignedDirectorEmail("");
     } catch (error: any) {
       toast.error("Gagal menyimpan data: " + (error.message || "Terjadi kesalahan"));
     } finally {
@@ -271,6 +293,56 @@ const Generator = () => {
                   <SelectItem value="DIBATALKAN">DIBATALKAN</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Approval Configuration Section */}
+            <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <Label className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                Konfigurasi Approval Pengajuan
+              </Label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Dibutuhkan Approval Dari</Label>
+                  <Select onValueChange={setApprovalType} value={approvalType}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MANAGER">Hanya Manager</SelectItem>
+                      <SelectItem value="DIREKTUR">Hanya Direktur</SelectItem>
+                      <SelectItem value="BOTH">Manager & Direktur</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(approvalType === "MANAGER" || approvalType === "BOTH") && (
+                  <div className="space-y-2 animate-in fade-in duration-200">
+                    <Label>Email Manager Penanggung Jawab</Label>
+                    <Input
+                      type="email"
+                      value={assignedManagerEmail}
+                      onChange={(e) => setAssignedManagerEmail(e.target.value)}
+                      placeholder="manager@email.com"
+                      className="bg-white"
+                    />
+                  </div>
+                )}
+
+                {(approvalType === "DIREKTUR" || approvalType === "BOTH") && (
+                  <div className="space-y-2 animate-in fade-in duration-200">
+                    <Label>Email Direktur Penanggung Jawab</Label>
+                    <Input
+                      type="email"
+                      value={assignedDirectorEmail}
+                      onChange={(e) => setAssignedDirectorEmail(e.target.value)}
+                      placeholder="direktur@email.com"
+                      className="bg-white"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* BM Section */}

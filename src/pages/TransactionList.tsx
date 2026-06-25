@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar, Paperclip, Image as ImageIcon } from "lucide-react";
+import { Loader2, RefreshCw, Search, Edit, Trash2, FileDown, CheckCircle, Circle, Filter, X, Calendar, Paperclip, Image as ImageIcon, ThumbsUp, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -40,6 +41,8 @@ import EditTransactionDialog from "@/components/EditTransactionDialog";
 import AttachmentDialog from "@/components/AttachmentDialog";
 
 const TransactionList = () => {
+  const { user, role } = useAuth();
+
   // Helper to get last 30 days range including today
   const getLast30DaysRange = () => {
     const now = new Date();
@@ -141,7 +144,68 @@ const TransactionList = () => {
     }
   };
 
+  const handleApprove = async (t: any) => {
+    try {
+      const updates: any = {};
+      const nowStr = new Date().toISOString();
+
+      if (role === "MANAGER") {
+        updates.manager_approved = true;
+        updates.manager_approval_date = nowStr;
+      } else if (role === "DIREKTUR") {
+        updates.director_approved = true;
+        updates.director_approval_date = nowStr;
+      }
+
+      // Cek apakah semua approval yang dibutuhkan sudah terpenuhi
+      const willBeManagerApproved = role === "MANAGER" ? true : t.manager_approved;
+      const willBeDirectorApproved = role === "DIREKTUR" ? true : t.director_approved;
+      const approvalType = t.approval_type || "BOTH";
+
+      let isFullyApproved = false;
+      if (approvalType === "MANAGER" && willBeManagerApproved) isFullyApproved = true;
+      if (approvalType === "DIREKTUR" && willBeDirectorApproved) isFullyApproved = true;
+      if (approvalType === "BOTH" && willBeManagerApproved && willBeDirectorApproved) isFullyApproved = true;
+
+      if (isFullyApproved) {
+        updates.status = "DISETUJUI";
+      }
+
+      const { error } = await supabase
+        .from("transactions")
+        .update(updates)
+        .eq("id", t.id);
+
+      if (error) throw error;
+
+      toast.success("Transaksi berhasil disetujui!");
+      fetchTransactions();
+    } catch (error: any) {
+      toast.error("Gagal menyetujui transaksi: " + error.message);
+    }
+  };
+
   const filteredTransactions = transactions.filter((t) => {
+    // 1. Filter berdasarkan Role & Email Penanggung Jawab
+    const userEmail = user?.email?.toLowerCase();
+    
+    if (role === "MANAGER") {
+      const isAssigned = t.assigned_manager_email?.toLowerCase() === userEmail;
+      const needsManagerApproval = t.approval_type === "MANAGER" || t.approval_type === "BOTH";
+      const isNotYetApproved = !t.manager_approved;
+      
+      // Manager hanya melihat transaksi yang ditugaskan kepadanya, butuh approval manager, dan belum di-approve
+      if (!isAssigned || !needsManagerApproval || !isNotYetApproved) return false;
+    } else if (role === "DIREKTUR") {
+      const isAssigned = t.assigned_director_email?.toLowerCase() === userEmail;
+      const needsDirectorApproval = t.approval_type === "DIREKTUR" || t.approval_type === "BOTH";
+      const isNotYetApproved = !t.director_approved;
+
+      // Direktur hanya melihat transaksi yang ditugaskan kepadanya, butuh approval direktur, dan belum di-approve
+      if (!isAssigned || !needsDirectorApproval || !isNotYetApproved) return false;
+    }
+
+    // 2. Filter Pencarian & Print (untuk semua role)
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
       t.school_name.toLowerCase().includes(searchLower) ||
@@ -263,11 +327,20 @@ const TransactionList = () => {
     <Card className="w-full max-w-[100vw] shadow-lg border-t-4 border-t-primary rounded-none lg:rounded-xl overflow-hidden">
       <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 pb-4 px-4 sm:px-6">
         <div>
-          <CardTitle className="text-xl font-bold">Daftar Transaksi</CardTitle>
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            Daftar Transaksi 
+            {role !== "STAFF" && (
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-none font-bold text-xs">
+                Mode Approval: {role}
+              </Badge>
+            )}
+          </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            {startDate && endDate 
-              ? `Menampilkan data periode ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`
-              : "Menampilkan semua data transaksi"}
+            {role !== "STAFF" 
+              ? `Menampilkan transaksi yang ditugaskan ke email Anda (${user?.email}) dan membutuhkan persetujuan Anda.`
+              : startDate && endDate 
+                ? `Menampilkan data periode ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`
+                : "Menampilkan semua data transaksi"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -367,6 +440,7 @@ const TransactionList = () => {
                 <TableHead className="font-bold px-2">Nominal</TableHead>
                 <TableHead className="font-bold text-center px-2">% BM</TableHead>
                 <TableHead className="font-bold px-2">Status</TableHead>
+                <TableHead className="font-bold px-2">Approval</TableHead>
                 <TableHead className="font-bold px-2">Kode Transaksi</TableHead>
                 <TableHead className="font-bold px-2">Rekanan</TableHead>
                 <TableHead className="font-bold px-2">Bank / Rekening</TableHead>
@@ -377,7 +451,7 @@ const TransactionList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="h-24 text-center">
+                  <TableCell colSpan={13} className="h-24 text-center">
                     <div className="flex items-center justify-center">
                       <Loader2 className="w-6 h-6 animate-spin mr-2" />
                       Memuat data...
@@ -386,8 +460,8 @@ const TransactionList = () => {
                 </TableRow>
               ) : filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
-                    Tidak ada data ditemukan untuk periode ini.
+                  <TableCell colSpan={13} className="h-24 text-center text-muted-foreground">
+                    Tidak ada data transaksi yang membutuhkan tindakan Anda saat ini.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -441,11 +515,32 @@ const TransactionList = () => {
                         variant={t.status === "DIBATALKAN" ? "destructive" : "outline"}
                         className={cn(
                           "text-[10px] px-1.5 py-0",
-                          t.status === "DIAJUKAN" && "bg-green-50 text-green-700 border-green-200"
+                          t.status === "DIAJUKAN" && "bg-green-50 text-green-700 border-green-200",
+                          t.status === "DISETUJUI" && "bg-blue-50 text-blue-700 border-blue-200"
                         )}
                       >
                         {t.status || "DIAJUKAN"}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="px-2">
+                      <div className="flex flex-col gap-1 text-[10px]">
+                        {(t.approval_type === "MANAGER" || t.approval_type === "BOTH") && (
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-slate-500">M:</span>
+                            <Badge variant={t.manager_approved ? "default" : "outline"} className="text-[9px] px-1 py-0">
+                              {t.manager_approved ? "Approved" : "Pending"}
+                            </Badge>
+                          </div>
+                        )}
+                        {(t.approval_type === "DIREKTUR" || t.approval_type === "BOTH") && (
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-slate-500">D:</span>
+                            <Badge variant={t.director_approved ? "default" : "outline"} className="text-[9px] px-1 py-0">
+                              {t.director_approved ? "Approved" : "Pending"}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="px-2">
                       <code className="bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono border">
@@ -482,58 +577,75 @@ const TransactionList = () => {
                     </TableCell>
                     <TableCell className="px-2">
                       <div className="flex items-center justify-center gap-0.5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={cn(
-                            "h-7 w-7",
-                            t.attachment_url 
-                              ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50" 
-                              : "text-slate-400 hover:text-slate-500 hover:bg-slate-50"
-                          )}
-                          onClick={() => {
-                            setAttachmentTransaction(t);
-                            setIsAttachmentDialogOpen(true);
-                          }}
-                          title="Lampiran Bukti"
-                        >
-                          {t.attachment_url ? <ImageIcon className="w-3.5 h-3.5" /> : <Paperclip className="w-3.5 h-3.5" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                          onClick={() => downloadPDF(t)}
-                          title="Download PDF"
-                        >
-                          <FileDown className="w-3.5 h-3.5" />
-                        </Button>
-                        {!t.is_printed && (
+                        {/* Tombol Approval untuk Manager / Direktur */}
+                        {role !== "STAFF" && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="h-7 px-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg flex items-center gap-1"
+                            onClick={() => handleApprove(t)}
+                            title="Setujui Transaksi"
+                          >
+                            <ThumbsUp className="w-3 h-3" /> Approve
+                          </Button>
+                        )}
+
+                        {role === "STAFF" && (
                           <>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className={cn(
+                                "h-7 w-7",
+                                t.attachment_url 
+                                  ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50" 
+                                  : "text-slate-400 hover:text-slate-500 hover:bg-slate-50"
+                              )}
                               onClick={() => {
-                                setEditingTransaction(t);
-                                setIsEditDialogOpen(true);
+                                setAttachmentTransaction(t);
+                                setIsAttachmentDialogOpen(true);
                               }}
-                              title="Edit"
+                              title="Lampiran Bukti"
                             >
-                              <Edit className="w-3.5 h-3.5" />
+                              {t.attachment_url ? <ImageIcon className="w-3.5 h-3.5" /> : <Paperclip className="w-3.5 h-3.5" />}
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => {
-                                setDeletingId(t.id);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                              title="Hapus"
+                              className="h-7 w-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                              onClick={() => downloadPDF(t)}
+                              title="Download PDF"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <FileDown className="w-3.5 h-3.5" />
                             </Button>
+                            {!t.is_printed && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  onClick={() => {
+                                    setEditingTransaction(t);
+                                    setIsEditDialogOpen(true);
+                                  }}
+                                  title="Edit"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    setDeletingId(t.id);
+                                    setIsDeleteDialogOpen(true);
+                                  }}
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </>
+                            )}
                           </>
                         )}
                       </div>
