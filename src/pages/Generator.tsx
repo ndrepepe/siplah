@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface BMSplit {
   amount: string;
   percentage: string;
+}
+
+interface ApproverUser {
+  email: string;
 }
 
 const Generator = () => {
@@ -47,7 +51,41 @@ const Generator = () => {
   const [assignedManagerEmail, setAssignedManagerEmail] = useState("");
   const [assignedDirectorEmail, setAssignedDirectorEmail] = useState("");
 
+  // List Approvers dari Database
+  const [managers, setManagers] = useState<ApproverUser[]>([]);
+  const [directors, setDirectors] = useState<ApproverUser[]>([]);
+
   const { toast: showToast } = useToast();
+
+  // Fetch data user/approver dari database
+  useEffect(() => {
+    const fetchApprovers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("email, role");
+        
+        if (error) throw error;
+
+        if (data) {
+          const mList = data
+            .filter((u: any) => u.role?.toUpperCase() === "MANAGER")
+            .map((u: any) => ({ email: u.email }));
+          
+          const dList = data
+            .filter((u: any) => u.role?.toUpperCase() === "DIREKTUR" || u.role?.toUpperCase() === "DIRECTOR")
+            .map((u: any) => ({ email: u.email }));
+          
+          setManagers(mList);
+          setDirectors(dList);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data profiles:", err);
+      }
+    };
+
+    fetchApprovers();
+  }, []);
 
   const generateCode = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -321,26 +359,44 @@ const Generator = () => {
                 {(approvalType === "MANAGER" || approvalType === "BOTH") && (
                   <div className="space-y-2 animate-in fade-in duration-200">
                     <Label>Email Manager Penanggung Jawab</Label>
-                    <Input
-                      type="email"
-                      value={assignedManagerEmail}
-                      onChange={(e) => setAssignedManagerEmail(e.target.value)}
-                      placeholder="manager@email.com"
-                      className="bg-white"
-                    />
+                    <Select onValueChange={setAssignedManagerEmail} value={assignedManagerEmail}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Pilih Manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {managers.length === 0 ? (
+                          <SelectItem value="no-manager" disabled>Tidak ada manager tersedia</SelectItem>
+                        ) : (
+                          managers.map((m) => (
+                            <SelectItem key={m.email} value={m.email}>
+                              {m.email}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 
                 {(approvalType === "DIREKTUR" || approvalType === "BOTH") && (
                   <div className="space-y-2 animate-in fade-in duration-200">
                     <Label>Email Direktur Penanggung Jawab</Label>
-                    <Input
-                      type="email"
-                      value={assignedDirectorEmail}
-                      onChange={(e) => setAssignedDirectorEmail(e.target.value)}
-                      placeholder="direktur@email.com"
-                      className="bg-white"
-                    />
+                    <Select onValueChange={setAssignedDirectorEmail} value={assignedDirectorEmail}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Pilih Direktur" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {directors.length === 0 ? (
+                          <SelectItem value="no-director" disabled>Tidak ada direktur tersedia</SelectItem>
+                        ) : (
+                          directors.map((d) => (
+                            <SelectItem key={d.email} value={d.email}>
+                              {d.email}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </div>
