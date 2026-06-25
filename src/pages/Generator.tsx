@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, RefreshCw, Save, Plus, Trash2, Calculator, ShieldCheck } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,9 @@ interface ApproverUser {
 }
 
 const Generator = () => {
+  const { user, role } = useAuth();
+  const isSuperAdmin = role === "SUPER_ADMIN" || user?.email?.toLowerCase() === "salmon@pepenio.my.id";
+
   const [schoolName, setSchoolName] = useState("");
   const [poNumber, setPoNumber] = useState("");
   const [transactionAmount, setTransactionAmount] = useState("");
@@ -84,6 +88,19 @@ const Generator = () => {
 
     fetchApprovers();
   }, []);
+
+  // Auto-select approver pertama jika user bukan Super Admin agar validasi form tetap lolos
+  useEffect(() => {
+    if (managers.length > 0 && !assignedManagerEmail) {
+      setAssignedManagerEmail(managers[0].email);
+    }
+  }, [managers, assignedManagerEmail]);
+
+  useEffect(() => {
+    if (directors.length > 0 && !assignedDirectorEmail) {
+      setAssignedDirectorEmail(directors[0].email);
+    }
+  }, [directors, assignedDirectorEmail]);
 
   // Reset email pilihan jika tipe approval berubah
   useEffect(() => {
@@ -251,8 +268,11 @@ const Generator = () => {
       setStatus("DIAJUKAN");
       setGeneratedCode("");
       setApprovalType("BOTH");
-      setAssignedManagerEmail("");
-      setAssignedDirectorEmail("");
+      // Jangan reset email jika bukan super admin agar tetap terisi otomatis
+      if (isSuperAdmin) {
+        setAssignedManagerEmail("");
+        setAssignedDirectorEmail("");
+      }
     } catch (error: any) {
       toast.error("Gagal menyimpan data: " + (error.message || "Terjadi kesalahan"));
     } finally {
@@ -343,74 +363,76 @@ const Generator = () => {
               </Select>
             </div>
 
-            {/* Approval Configuration Section */}
-            <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-              <Label className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-primary" />
-                Konfigurasi Approval Pengajuan
-              </Label>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Dibutuhkan Approval Dari</Label>
-                  <Select onValueChange={setApprovalType} value={approvalType}>
-                    <SelectTrigger className="bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="NONE">Tidak Perlu Approval</SelectItem>
-                      <SelectItem value="MANAGER">Hanya Manager</SelectItem>
-                      <SelectItem value="DIREKTUR">Hanya Direktur</SelectItem>
-                      <SelectItem value="BOTH">Manager & Direktur</SelectItem>
-                    </SelectContent>
-                  </Select>
+            {/* Approval Configuration Section - Hanya muncul untuk Super Admin */}
+            {isSuperAdmin && (
+              <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 animate-in fade-in duration-300">
+                <Label className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-primary" />
+                  Konfigurasi Approval Pengajuan
+                </Label>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Dibutuhkan Approval Dari</Label>
+                    <Select onValueChange={setApprovalType} value={approvalType}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NONE">Tidak Perlu Approval</SelectItem>
+                        <SelectItem value="MANAGER">Hanya Manager</SelectItem>
+                        <SelectItem value="DIREKTUR">Hanya Direktur</SelectItem>
+                        <SelectItem value="BOTH">Manager & Direktur</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(approvalType === "MANAGER" || approvalType === "BOTH") && (
+                    <div className="space-y-2 animate-in fade-in duration-200">
+                      <Label>Email Manager Penanggung Jawab</Label>
+                      <Select onValueChange={setAssignedManagerEmail} value={assignedManagerEmail}>
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Pilih Manager" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {managers.length === 0 ? (
+                            <SelectItem value="no-manager" disabled>Tidak ada manager tersedia</SelectItem>
+                          ) : (
+                            managers.map((m) => (
+                              <SelectItem key={m.email} value={m.email}>
+                                {m.email}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {(approvalType === "DIREKTUR" || approvalType === "BOTH") && (
+                    <div className="space-y-2 animate-in fade-in duration-200">
+                      <Label>Email Direktur Penanggung Jawab</Label>
+                      <Select onValueChange={setAssignedDirectorEmail} value={assignedDirectorEmail}>
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Pilih Direktur" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {directors.length === 0 ? (
+                            <SelectItem value="no-director" disabled>Tidak ada direktur tersedia</SelectItem>
+                          ) : (
+                            directors.map((d) => (
+                              <SelectItem key={d.email} value={d.email}>
+                                {d.email}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
-
-                {(approvalType === "MANAGER" || approvalType === "BOTH") && (
-                  <div className="space-y-2 animate-in fade-in duration-200">
-                    <Label>Email Manager Penanggung Jawab</Label>
-                    <Select onValueChange={setAssignedManagerEmail} value={assignedManagerEmail}>
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Pilih Manager" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {managers.length === 0 ? (
-                          <SelectItem value="no-manager" disabled>Tidak ada manager tersedia</SelectItem>
-                        ) : (
-                          managers.map((m) => (
-                            <SelectItem key={m.email} value={m.email}>
-                              {m.email}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {(approvalType === "DIREKTUR" || approvalType === "BOTH") && (
-                  <div className="space-y-2 animate-in fade-in duration-200">
-                    <Label>Email Direktur Penanggung Jawab</Label>
-                    <Select onValueChange={setAssignedDirectorEmail} value={assignedDirectorEmail}>
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Pilih Direktur" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {directors.length === 0 ? (
-                          <SelectItem value="no-director" disabled>Tidak ada direktur tersedia</SelectItem>
-                        ) : (
-                          directors.map((d) => (
-                            <SelectItem key={d.email} value={d.email}>
-                              {d.email}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
             {/* BM Section */}
             <div className="md:col-span-2 space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
