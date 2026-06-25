@@ -41,6 +41,7 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
   const [bmType, setBmType] = useState<"single" | "multiple">("single");
   const [bmSplits, setBmSplits] = useState<BMSplit[]>([{ amount: "", percentage: "" }]);
   const [isSaving, setIsSaving] = useState(false);
+  const [profiles, setProfiles] = useState<any[]>([]);
 
   useEffect(() => {
     if (transaction) {
@@ -63,6 +64,24 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
       }
     }
   }, [transaction]);
+
+  // Fetch profiles for email selection
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("email, role, full_name");
+        
+        if (!error && data) {
+          setProfiles(data);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data profil:", err);
+      }
+    };
+    fetchProfiles();
+  }, []);
 
   const addBmSplit = () => {
     setBmSplits([...bmSplits, { amount: "", percentage: "" }]);
@@ -162,6 +181,10 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
   const splitTotal = bmSplits.reduce((sum, split) => sum + (parseFloat(formData.transaction_amount) || 0), 0);
   const remainingAmount = (parseFloat(formData.transaction_amount) || 0) - splitTotal;
 
+  // Filter profiles by role if available
+  const managerProfiles = profiles.filter(p => p.role?.toUpperCase() === "MANAGER" || !p.role);
+  const directorProfiles = profiles.filter(p => p.role?.toUpperCase() === "DIREKTUR" || p.role?.toUpperCase() === "DIRECTOR" || !p.role);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl">
@@ -258,26 +281,62 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
               {(formData.approval_type === "MANAGER" || formData.approval_type === "BOTH") && (
                 <div className="space-y-2">
                   <Label>Email Manager</Label>
-                  <Input
-                    type="email"
-                    value={formData.assigned_manager_email || ""}
-                    onChange={(e) => setFormData({...formData, assigned_manager_email: e.target.value})}
-                    placeholder="manager@email.com"
-                    className="bg-white"
-                  />
+                  {profiles.length > 0 ? (
+                    <Select
+                      value={formData.assigned_manager_email || ""}
+                      onValueChange={(val) => setFormData({...formData, assigned_manager_email: val})}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Pilih Manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {managerProfiles.map((p) => (
+                          <SelectItem key={p.email} value={p.email}>
+                            {p.full_name ? `${p.full_name} (${p.email})` : p.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      type="email"
+                      value={formData.assigned_manager_email || ""}
+                      onChange={(e) => setFormData({...formData, assigned_manager_email: e.target.value})}
+                      placeholder="manager@email.com"
+                      className="bg-white"
+                    />
+                  )}
                 </div>
               )}
 
               {(formData.approval_type === "DIREKTUR" || formData.approval_type === "BOTH") && (
                 <div className="space-y-2">
                   <Label>Email Direktur</Label>
-                  <Input
-                    type="email"
-                    value={formData.assigned_director_email || ""}
-                    onChange={(e) => setFormData({...formData, assigned_director_email: e.target.value})}
-                    placeholder="direktur@email.com"
-                    className="bg-white"
-                  />
+                  {profiles.length > 0 ? (
+                    <Select
+                      value={formData.assigned_director_email || ""}
+                      onValueChange={(val) => setFormData({...formData, assigned_director_email: val})}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Pilih Direktur" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {directorProfiles.map((p) => (
+                          <SelectItem key={p.email} value={p.email}>
+                            {p.full_name ? `${p.full_name} (${p.email})` : p.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      type="email"
+                      value={formData.assigned_director_email || ""}
+                      onChange={(e) => setFormData({...formData, assigned_director_email: e.target.value})}
+                      placeholder="direktur@email.com"
+                      className="bg-white"
+                    />
+                  )}
                 </div>
               )}
             </div>
