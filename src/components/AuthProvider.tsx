@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AuthContextType {
   session: Session | null;
@@ -46,6 +47,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fitur Otomatis Logout setelah 3 menit tidak ada aktivitas
+  React.useEffect(() => {
+    if (!session || !user) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const handleAutoLogout = async () => {
+      await supabase.auth.signOut();
+      toast.error("Sesi Anda telah berakhir karena tidak ada aktivitas selama 3 menit.", {
+        duration: 6000,
+      });
+    };
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleAutoLogout, 3 * 60 * 1000); // 3 menit
+    };
+
+    // Daftar event aktivitas pengguna
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    
+    events.forEach((event) => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    // Inisialisasi timer pertama kali
+    resetTimer();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach((event) => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [session, user]);
 
   const updateRole = async (newRole: string) => {
     if (!user) return;
