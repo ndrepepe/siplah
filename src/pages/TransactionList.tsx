@@ -622,18 +622,20 @@ const TransactionList = () => {
                                 >
                                   <Edit className="w-3.5 h-3.5" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => {
-                                    setDeletingId(t.id);
-                                    setIsDeleteDialogOpen(true);
-                                  }}
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
+                                {t.status !== "DISETUJUI" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    onClick={() => {
+                                      setDeletingId(t.id);
+                                      setIsDeleteDialogOpen(true);
+                                    }}
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
                               </>
                             )}
                           </>
@@ -682,18 +684,20 @@ const TransactionList = () => {
                                 >
                                   <Edit className="w-3.5 h-3.5" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => {
-                                    setDeletingId(t.id);
-                                    setIsDeleteDialogOpen(true);
-                                  }}
-                                  title="Hapus"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
+                                {t.status !== "DISETUJUI" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    onClick={() => {
+                                      setDeletingId(t.id);
+                                      setIsDeleteDialogOpen(true);
+                                    }}
+                                    title="Hapus"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
                               </>
                             )}
                           </>
