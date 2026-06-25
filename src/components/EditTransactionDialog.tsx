@@ -181,9 +181,12 @@ const EditTransactionDialog = ({ transaction, open, onOpenChange, onSuccess }: E
   const splitTotal = bmSplits.reduce((sum, split) => sum + (parseFloat(formData.transaction_amount) || 0), 0);
   const remainingAmount = (parseFloat(formData.transaction_amount) || 0) - splitTotal;
 
-  // Filter profiles by role if available
-  const managerProfiles = profiles.filter(p => p.role?.toUpperCase() === "MANAGER" || !p.role);
-  const directorProfiles = profiles.filter(p => p.role?.toUpperCase() === "DIREKTUR" || p.role?.toUpperCase() === "DIRECTOR" || !p.role);
+  // Filter strictly by role. If no users have that role, fallback to all profiles so the dropdown is not empty.
+  const filteredManagers = profiles.filter(p => p.role?.toUpperCase() === "MANAGER");
+  const managerProfiles = filteredManagers.length > 0 ? filteredManagers : profiles;
+
+  const filteredDirectors = profiles.filter(p => p.role?.toUpperCase() === "DIREKTUR" || p.role?.toUpperCase() === "DIRECTOR");
+  const directorProfiles = filteredDirectors.length > 0 ? filteredDirectors : profiles;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
