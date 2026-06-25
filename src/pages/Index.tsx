@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import Generator from "./Generator";
 import TransactionList from "./TransactionList";
@@ -7,8 +8,9 @@ import Dashboard from "./Dashboard";
 import BulkImport from "@/components/BulkImport";
 import SubmissionGuide from "@/components/SubmissionGuide";
 import UserManagement from "@/components/UserManagement";
+import ChangePasswordDialog from "@/components/ChangePasswordDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet, HelpCircle, ShieldAlert, Users } from "lucide-react";
+import { ClipboardList, PlusCircle, LogOut, User, Anchor, LayoutDashboard, FileSpreadsheet, HelpCircle, ShieldAlert, Users, Key } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -32,6 +34,7 @@ import {
 const Index = () => {
   const { user, role, updateRole, signOut } = useAuth();
   const isSuperAdmin = user?.email?.toLowerCase() === "salmon@pepenio.my.id";
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   const handleRoleChange = async (newRole: string) => {
     try {
@@ -99,6 +102,11 @@ const Index = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 rounded-xl border-primary/10">
                 <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsChangePasswordOpen(true)} className="cursor-pointer font-medium">
+                  <Key className="w-4 h-4 mr-2 text-primary" />
+                  Ganti Password
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()} className="text-red-600 cursor-pointer font-medium">
                   <LogOut className="w-4 h-4 mr-2" />
@@ -201,6 +209,10 @@ const Index = () => {
           )}
         </Tabs>
       </div>
+      <ChangePasswordDialog 
+        open={isChangePasswordOpen} 
+        onOpenChange={setIsChangePasswordOpen} 
+      />
       <MadeWithDyad />
     </div>
   );
