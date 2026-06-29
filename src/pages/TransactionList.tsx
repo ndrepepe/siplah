@@ -141,7 +141,7 @@ const TransactionList = () => {
     }
   };
 
-  const handlePrint = async (transactionId: string) => {
+  const markTransactionPrinted = async (transactionId: string) => {
     try {
       const { error } = await supabase
         .from("transactions")
@@ -150,11 +150,18 @@ const TransactionList = () => {
 
       if (error) throw error;
 
-      // Mencatat log aktivitas menandai sudah di-print
       await logActivity("MARK_PRINTED", {
         transaction_id: transactionId
       });
+    } catch (error: any) {
+      console.error("Error marking printed:", error);
+      throw error;
+    }
+  };
 
+  const handlePrint = async (transactionId: string) => {
+    try {
+      await markTransactionPrinted(transactionId);
       toast.success("Transaksi telah ditandai sebagai sudah di-print");
       fetchTransactions();
     } catch (error: any) {
@@ -309,14 +316,19 @@ const TransactionList = () => {
 
     doc.save(`transaksi-${t.code}.pdf`);
 
-    // Mencatat log aktivitas download PDF
+    // Mencatat log aktivitas download PDF dan menandai sudah diprint
     await logActivity("DOWNLOAD_PDF", {
       transaction_id: t.id,
       school_name: t.school_name,
       code: t.code
     });
 
+    if (!t.is_printed) {
+      await markTransactionPrinted(t.id);
+    }
+
     toast.success("PDF berhasil diunduh");
+    fetchTransactions();
   };
 
   const resetDateFilters = () => {
@@ -590,18 +602,22 @@ const TransactionList = () => {
                     {showPrintColumn && (
                       <TableCell className="text-center px-2">
                         <div className="flex items-center justify-center gap-1">
-                          {t.is_printed ? (
-                            <CheckCircle className="w-4 h-4 text-green-600" />
+                          {t.status === "DISETUJUI" ? (
+                            t.is_printed ? (
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                onClick={() => handlePrint(t.id)}
+                                title="Tandai sebagai sudah di-print"
+                              >
+                                <Circle className="w-3.5 h-3.5" />
+                              </Button>
+                            )
                           ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              onClick={() => handlePrint(t.id)}
-                              title="Tandai sebagai sudah di-print"
-                            >
-                              <Circle className="w-3.5 h-3.5" />
-                            </Button>
+                            <span className="text-muted-foreground text-xs">-</span>
                           )}
                         </div>
                       </TableCell>
