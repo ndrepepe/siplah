@@ -680,15 +680,17 @@ const TransactionList = () => {
                             >
                               {t.attachment_url ? <ImageIcon className="w-3.5 h-3.5" /> : <Paperclip className="w-3.5 h-3.5" />}
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                              onClick={() => downloadPDF(t)}
-                              title="Download PDF"
-                            >
-                              <FileDown className="w-3.5 h-3.5" />
-                            </Button>
+                            {t.status === "DISETUJUI" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                                onClick={() => downloadPDF(t)}
+                                title="Download PDF"
+                              >
+                                <FileDown className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
                             {!t.is_printed && (
                               <>
                                 <Button
