@@ -331,7 +331,7 @@ const TransactionList = () => {
   };
 
   return (
-    <Card className="w-full max-w-[100vw] shadow-lg border-t-4 border-t-primary rounded-none lg:rounded-xl overflow-hidden">
+    <Card className="w-full max-w-full shadow-lg border-t-4 border-t-primary rounded-none lg:rounded-xl overflow-hidden">
       <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0 pb-4 px-4 sm:px-6">
         <div>
           <CardTitle className="text-xl font-bold flex items-center gap-2">

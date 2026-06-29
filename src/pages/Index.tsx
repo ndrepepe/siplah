@@ -51,7 +51,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#640D5F]/10 via-[#B12C00]/5 to-[#FFCC00]/10 p-4 md:p-8 overflow-y-auto">
-      <div className="max-w-6xl mx-auto w-full">
+      <div className="max-w-[97%] mx-auto w-full">
         <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white/90 p-6 rounded-3xl shadow-xl shadow-[#640D5F]/5 border border-[#640D5F]/10 backdrop-blur-md">
           <div className="text-center md:text-left flex items-center gap-4">
             <div className="bg-primary p-3 rounded-2xl text-white shadow-lg shadow-primary/30">
@@ -121,7 +121,7 @@ const Index = () => {
         <Tabs key={role} defaultValue={defaultTab} className="w-full">
           <div className="flex justify-center mb-8">
             <TabsList className={cn(
-              "grid w-full max-w-5xl h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10 overflow-x-auto",
+              "grid w-full max-w-full h-16 p-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-primary/10 overflow-x-auto",
               isSuperAdmin ? "grid-cols-7" : showAllTabs ? "grid-cols-5" : "grid-cols-2"
             )}>
               {showAllTabs && (
