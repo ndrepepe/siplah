@@ -27,6 +27,8 @@ interface BMSplit {
 
 interface ApproverUser {
   email: string;
+  nama?: string;
+  no_hp?: string;
 }
 
 const Generator = () => {
@@ -73,11 +75,11 @@ const Generator = () => {
         if (data) {
           const mList = data
             .filter((u: any) => u.role?.toUpperCase() === "MANAGER")
-            .map((u: any) => ({ email: u.email }));
+            .map((u: any) => ({ email: u.email, nama: u.nama, no_hp: u.no_hp }));
           
           const dList = data
             .filter((u: any) => u.role?.toUpperCase() === "DIREKTUR" || u.role?.toUpperCase() === "DIRECTOR")
-            .map((u: any) => ({ email: u.email }));
+            .map((u: any) => ({ email: u.email, nama: u.nama, no_hp: u.no_hp }));
           
           setManagers(mList);
           setDirectors(dList);
@@ -169,6 +171,61 @@ const Generator = () => {
     return true;
   };
 
+  const sendApprovalNotification = async (data: any) => {
+    // Notifikasi ke approver yang ditugaskan
+    const assignedUsers: { email: string; role: string }[] = [];
+    
+    if ((data.approval_type === "MANAGER" || data.approval_type === "BOTH") && data.assigned_manager_email) {
+      assignedUsers.push({ email: data.assigned_manager_email, role: "Manager" });
+    }
+    if ((data.approval_type === "DIREKTUR" || data.approval_type === "BOTH") && data.assigned_director_email) {
+      assignedUsers.push({ email: data.assigned_director_email, role: "Direktur" });
+    }
+
+    if (assignedUsers.length === 0) return;
+
+    // Fetch semua approvers untuk mendapatkan no_hp
+    try {
+      const { data: approversData, error } = await supabase.rpc("get_approvers");
+      if (error) throw error;
+
+      const formattedAmount = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      }).format(data.transaction_amount);
+
+      for (const assigned of assignedUsers) {
+        const approver = (approversData as any[])?.find(
+          (a: any) => a.email?.toLowerCase() === assigned.email?.toLowerCase()
+        );
+
+        if (approver && approver.no_hp) {
+          const message = `🔔 *NOTIFIKASI APPROVAL*\n\n`
+            + `Halo *${approver.nama || assigned.email}*,\n\n`
+            + `Anda mendapatkan tugas untuk menyetujui transaksi berikut:\n\n`
+            + `🏫 *Sekolah:* ${data.school_name}\n`
+            + `📄 *No PO:* ${data.po_number}\n`
+            + `💰 *Nominal:* ${formattedAmount}\n`
+            + `🔑 *Kode:* ${data.code}\n\n`
+            + `📋 *Peran Anda:* ${assigned.role}\n\n`
+            + `Silakan buka aplikasi Grand Line Manager untuk melakukan approval.\n\n`
+            + `_Pesan otomatis dari Grand Line Manager_`;
+
+          try {
+            await supabase.functions.invoke('send-whatsapp', {
+              body: { target_number: approver.no_hp, message: message }
+            });
+          } catch (waErr) {
+            console.error(`Gagal kirim WA ke ${approver.email}:`, waErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Gagal mengambil data approvers untuk notifikasi:", err);
+    }
+  };
+
   const sendWhatsAppNotification = async (data: any) => {
     try {
       const { error } = await supabase.functions.invoke('send-whatsapp', {
@@ -253,11 +310,15 @@ const Generator = () => {
         description: "Data transaksi disimpan.",
       });
 
+      // Kirim notifikasi WA ke nomor default (cabang/tim)
       toast.promise(sendWhatsAppNotification(transactionData), {
         loading: 'Mengirim notifikasi WhatsApp...',
         success: 'Notifikasi WhatsApp terkirim!',
         error: (err) => `Gagal kirim WA: ${err.message || 'Cek koneksi/API Key'}`
       });
+
+      // Kirim notifikasi WA ke approver yang ditugaskan
+      await sendApprovalNotification(transactionData);
 
       // Reset Form
       setSchoolName("");
@@ -277,7 +338,6 @@ const Generator = () => {
       setStatus("DIAJUKAN");
       setGeneratedCode("");
       setApprovalType("BOTH");
-      // Jangan reset email jika bukan super admin agar tetap terisi otomatis
       if (isSuperAdmin) {
         setAssignedManagerEmail("");
         setAssignedDirectorEmail("");
