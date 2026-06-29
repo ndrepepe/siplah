@@ -5,6 +5,7 @@ DROP FUNCTION IF EXISTS update_user_role_admin(uuid, text);
 DROP FUNCTION IF EXISTS update_user_password_admin(uuid, text);
 DROP FUNCTION IF EXISTS delete_user_admin(uuid);
 DROP FUNCTION IF EXISTS get_approvers();
+DROP FUNCTION IF EXISTS update_user_profile_admin(uuid, text, text);
 
 -- 1. Fungsi untuk mengambil daftar pengguna (Hanya untuk Super Admin)
 CREATE OR REPLACE FUNCTION list_users_admin()
@@ -35,7 +36,9 @@ $$;
 CREATE OR REPLACE FUNCTION create_user_admin(
   user_email TEXT,
   user_password TEXT,
-  user_role TEXT
+  user_role TEXT,
+  user_nama TEXT DEFAULT NULL,
+  user_no_hp TEXT DEFAULT NULL
 )
 RETURNS VOID
 SECURITY DEFINER
@@ -45,6 +48,7 @@ AS $$
 DECLARE
   new_user_id UUID;
   encrypted_pw TEXT;
+  meta_data JSONB;
 BEGIN
   -- Proteksi keamanan
   IF auth.jwt() ->> 'email' <> 'salmon@pepenio.my.id' THEN
@@ -53,6 +57,15 @@ BEGIN
 
   -- Enkripsi password menggunakan enkripsi bawaan Supabase
   encrypted_pw := crypt(user_password, gen_salt('bf'));
+
+  -- Bangun meta data dengan role, nama, dan no_hp
+  meta_data := jsonb_build_object('role', user_role);
+  IF user_nama IS NOT NULL AND user_nama <> '' THEN
+    meta_data := meta_data || jsonb_build_object('nama', user_nama);
+  END IF;
+  IF user_no_hp IS NOT NULL AND user_no_hp <> '' THEN
+    meta_data := meta_data || jsonb_build_object('no_hp', user_no_hp);
+  END IF;
 
   -- Masukkan data ke tabel auth.users
   INSERT INTO auth.users (
@@ -80,7 +93,7 @@ BEGIN
     encrypted_pw,
     now(),
     '{"provider": "email", "providers": ["email"]}'::jsonb,
-    jsonb_build_object('role', user_role),
+    meta_data,
     now(),
     now(),
     '',
@@ -204,6 +217,46 @@ BEGIN
     COALESCE(u.raw_user_meta_data->>'role', 'STAFF') as role
   FROM auth.users u
   WHERE u.raw_user_meta_data->>'role' IS NOT NULL;
+END;
+$$;
+
+-- 7. Fungsi untuk memperbarui profil pengguna (Nama dan No HP)
+CREATE OR REPLACE FUNCTION update_user_profile_admin(
+  target_user_id UUID,
+  user_nama TEXT,
+  user_no_hp TEXT
+)
+RETURNS VOID
+SECURITY DEFINER
+SET search_path = auth, public, extensions
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  current_meta JSONB;
+BEGIN
+  -- Proteksi keamanan
+  IF auth.jwt() ->> 'email' <> 'salmon@pepenio.my.id' THEN
+    RAISE EXCEPTION 'Akses ditolak: Hanya Super Admin yang diizinkan.';
+  END IF;
+
+  -- Ambil meta data yang ada
+  SELECT raw_user_meta_data INTO current_meta FROM auth.users WHERE id = target_user_id;
+  
+  -- Update nama dan no_hp di dalam meta data
+  current_meta := COALESCE(current_meta, '{}'::jsonb);
+  
+  IF user_nama IS NOT NULL THEN
+    current_meta := jsonb_set(current_meta, '{nama}', to_jsonb(user_nama));
+  END IF;
+  
+  IF user_no_hp IS NOT NULL THEN
+    current_meta := jsonb_set(current_meta, '{no_hp}', to_jsonb(user_no_hp));
+  END IF;
+
+  UPDATE auth.users
+  SET raw_user_meta_data = current_meta,
+      updated_at = now()
+  WHERE id = target_user_id;
 END;
 $$;
 
