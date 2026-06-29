@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, UserPlus, Key, Shield, Trash2, RefreshCw, Pencil } from "lucide-react";
+import { Loader2, UserPlus, Key, Shield, Trash2, RefreshCw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -24,7 +24,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import EditUserDialog from "./EditUserDialog";
 
 const UserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -33,8 +32,6 @@ const UserManagement = () => {
   // Form Create User
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newFullName, setNewFullName] = useState("");
-  const [newPhone, setNewPhone] = useState("");
   const [newRole, setNewRole] = useState("STAFF");
   const [isCreating, setIsCreating] = useState(false);
 
@@ -43,10 +40,6 @@ const UserManagement = () => {
   const [newPasswordForUser, setNewPasswordForUser] = useState("");
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-
-  // Edit User
-  const [editingUser, setEditingUser] = useState<any>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -79,9 +72,7 @@ const UserManagement = () => {
       const { error } = await supabase.rpc('create_user_admin', {
         user_email: newEmail,
         user_password: newPassword,
-        user_role: newRole,
-        full_name: newFullName,
-        phone: newPhone
+        user_role: newRole
       });
 
       if (error) throw error;
@@ -89,8 +80,6 @@ const UserManagement = () => {
       toast.success("User baru berhasil dibuat!");
       setNewEmail("");
       setNewPassword("");
-      setNewFullName("");
-      setNewPhone("");
       setNewRole("STAFF");
       fetchUsers();
     } catch (error: any) {
@@ -198,26 +187,6 @@ const UserManagement = () => {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Nama Lengkap</Label>
-                <Input
-                  type="text"
-                  value={newFullName}
-                  onChange={(e) => setNewFullName(e.target.value)}
-                  placeholder="Nama lengkap user"
-                  className="rounded-xl"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Nomor HP</Label>
-                <Input
-                  type="tel"
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  placeholder="08xxxxxxxxxx"
-                  className="rounded-xl"
-                />
-              </div>
-              <div className="space-y-1.5">
                 <Label>Role</Label>
                 <Select value={newRole} onValueChange={setNewRole}>
                   <SelectTrigger className="rounded-xl">
@@ -258,8 +227,6 @@ const UserManagement = () => {
                 <TableHeader>
                   <TableRow className="bg-slate-50">
                     <TableHead className="font-bold">Email</TableHead>
-                    <TableHead className="font-bold">Nama</TableHead>
-                    <TableHead className="font-bold">No HP</TableHead>
                     <TableHead className="font-bold">Role</TableHead>
                     <TableHead className="font-bold text-center">Aksi</TableHead>
                   </TableRow>
@@ -267,13 +234,13 @@ const UserManagement = () => {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
+                      <TableCell colSpan={3} className="text-center py-8">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
                       </TableCell>
                     </TableRow>
                   ) : users.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                         Belum ada user terdaftar.
                       </TableCell>
                     </TableRow>
@@ -287,12 +254,6 @@ const UserManagement = () => {
                           <TableCell className="font-medium text-sm">
                             {u.email}
                             {isSelf && <Badge className="ml-2 bg-primary">Super Admin</Badge>}
-                          </TableCell>
-                          <TableCell className="text-sm text-slate-700">
-                            {u.raw_user_meta_data?.full_name || "-"}
-                          </TableCell>
-                          <TableCell className="text-sm text-slate-700">
-                            {u.raw_user_meta_data?.phone || "-"}
                           </TableCell>
                           <TableCell>
                             {isSelf ? (
@@ -315,17 +276,6 @@ const UserManagement = () => {
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-2 text-xs font-bold rounded-lg"
-                                onClick={() => {
-                                  setEditingUser(u);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
-                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -390,14 +340,6 @@ const UserManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Dialog Edit User */}
-      <EditUserDialog
-        user={editingUser}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onSuccess={fetchUsers}
-      />
     </div>
   );
 };
